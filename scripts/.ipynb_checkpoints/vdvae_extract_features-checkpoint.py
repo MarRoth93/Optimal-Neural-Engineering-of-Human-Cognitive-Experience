@@ -84,7 +84,7 @@ test_images = batch_generator_external_images(data_path = image_path)
 
 trainloader = DataLoader(train_images,batch_size,shuffle=False)
 testloader = DataLoader(test_images,batch_size,shuffle=False)
-num_latents = 31
+num_latents = 70
 test_latents = []
 ref_latent_saved = False  # flag to control saving once
 

@@ -1,0 +1,18 @@
+# Ignore Python cache and compiled files
+__pycache__/
+*.pyc
+*.pyo
+
+# Ignore Jupyter Notebook checkpoints everywhere
+**/.ipynb_checkpoints/
+
+# Ignore logs folders everywhere
+**/logs/
+
+# Ignore results and data unless explicitly added
+results/
+data/
+
+# Allow scripts and slurm_scripts
+!scripts/**
+!slurm_scripts/**

@@ -94,11 +94,8 @@ print(f"Loaded ref_latent from: {ref_latent_path}")
 
 # -------------------- Latent Transformation --------------------
 def latent_transformation(latents, ref):
-    layer_dims = np.array([2**4,2**4,2**8,2**8,2**8,
-    2**8,2**10,2**10,2**10,2**10,2**10,2**10,2**10,
-    2**10,2**12,2**12,2**12,2**12,2**12,2**12,2**12,
-    2**12,2**12,2**12,2**12,2**12,2**12,2**12,2**12,
-    2**12,2**14])
+    layer_dims = np.array([2**4, 2**4, 2**8, 2**8, 2**8, 2**8,
+                           2**10]*8 + [2**12]*16 + [2**14])
     transformed_latents = []
     for i in range(31):
         t_lat = latents[:, layer_dims[:i].sum():layer_dims[:i+1].sum()]
