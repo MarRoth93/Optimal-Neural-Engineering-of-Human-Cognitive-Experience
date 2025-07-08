@@ -1,0 +1,46 @@
+==== Job started on gpunode13 at Wed Jul  2 15:14:56 CEST 2025 ====
+Job Name: 03_assessor_scores_all
+Job ID: 7631696
+Working Directory: /home/rothermm/brain-diffuser/slurm_scripts/analysis
+Activated Conda environment: /home/rothermm/.conda/envs/brain-diffuser/bin/python
+==== Computing assessor scores for subject 1 at Wed Jul  2 15:14:56 CEST 2025 ====
+/home/rothermm/.conda/envs/brain-diffuser/lib/python3.8/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and will be removed in 0.15, please use 'weights' instead.
+  warnings.warn(
+/home/rothermm/.conda/envs/brain-diffuser/lib/python3.8/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and will be removed in 0.15. The current behavior is equivalent to passing `weights=None`.
+  warnings.warn(msg)
+Saved Emonet-VDVAE scores (6874 images) to /home/rothermm/brain-diffuser/results/assessor_scores/subj01/emonet_vdvae_sub01.pkl
+/home/rothermm/brain-diffuser/scripts/analysis/compute_assessor_scores.py:64: DeprecationWarning: BILINEAR is deprecated and will be removed in Pillow 10 (2023-07-01). Use Resampling.BILINEAR instead.
+  T.Resize((256, 256), Image.BILINEAR),
+/home/rothermm/.conda/envs/brain-diffuser/lib/python3.8/site-packages/torchvision/transforms/transforms.py:332: UserWarning: Argument 'interpolation' of type int is deprecated since 0.13 and will be removed in 0.15. Please use InterpolationMode enum.
+  warnings.warn(
+Saved MemNet-VDVAE scores (6874 images) to /home/rothermm/brain-diffuser/results/assessor_scores/subj01/memnet_vdvae_sub01.pkl
+Saved Emonet-Versatile scores (6874 images) to /home/rothermm/brain-diffuser/results/assessor_scores/subj01/emonet_versatile_sub01.pkl
+Saved MemNet-Versatile scores (6874 images) to /home/rothermm/brain-diffuser/results/assessor_scores/subj01/memnet_versatile_sub01.pkl
+All done for subject 1
+==== Finished subject 1 at Wed Jul  2 16:17:37 CEST 2025 ====
+==== Computing assessor scores for subject 2 at Wed Jul  2 16:17:37 CEST 2025 ====
+/home/rothermm/.conda/envs/brain-diffuser/lib/python3.8/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and will be removed in 0.15, please use 'weights' instead.
+  warnings.warn(
+/home/rothermm/.conda/envs/brain-diffuser/lib/python3.8/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and will be removed in 0.15. The current behavior is equivalent to passing `weights=None`.
+  warnings.warn(msg)
+Saved Emonet-VDVAE scores (6874 images) to /home/rothermm/brain-diffuser/results/assessor_scores/subj02/emonet_vdvae_sub02.pkl
+/home/rothermm/brain-diffuser/scripts/analysis/compute_assessor_scores.py:64: DeprecationWarning: BILINEAR is deprecated and will be removed in Pillow 10 (2023-07-01). Use Resampling.BILINEAR instead.
+  T.Resize((256, 256), Image.BILINEAR),
+/home/rothermm/.conda/envs/brain-diffuser/lib/python3.8/site-packages/torchvision/transforms/transforms.py:332: UserWarning: Argument 'interpolation' of type int is deprecated since 0.13 and will be removed in 0.15. Please use InterpolationMode enum.
+  warnings.warn(
+Saved MemNet-VDVAE scores (6874 images) to /home/rothermm/brain-diffuser/results/assessor_scores/subj02/memnet_vdvae_sub02.pkl
+Saved Emonet-Versatile scores (6874 images) to /home/rothermm/brain-diffuser/results/assessor_scores/subj02/emonet_versatile_sub02.pkl
+Saved MemNet-Versatile scores (6874 images) to /home/rothermm/brain-diffuser/results/assessor_scores/subj02/memnet_versatile_sub02.pkl
+All done for subject 2
+==== Finished subject 2 at Wed Jul  2 17:21:03 CEST 2025 ====
+==== Computing assessor scores for subject 5 at Wed Jul  2 17:21:03 CEST 2025 ====
+/home/rothermm/.conda/envs/brain-diffuser/lib/python3.8/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and will be removed in 0.15, please use 'weights' instead.
+  warnings.warn(
+/home/rothermm/.conda/envs/brain-diffuser/lib/python3.8/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and will be removed in 0.15. The current behavior is equivalent to passing `weights=None`.
+  warnings.warn(msg)
+Saved Emonet-VDVAE scores (6874 images) to /home/rothermm/brain-diffuser/results/assessor_scores/subj05/emonet_vdvae_sub05.pkl
+/home/rothermm/brain-diffuser/scripts/analysis/compute_assessor_scores.py:64: DeprecationWarning: BILINEAR is deprecated and will be removed in Pillow 10 (2023-07-01). Use Resampling.BILINEAR instead.
+  T.Resize((256, 256), Image.BILINEAR),
+/home/rothermm/.conda/envs/brain-diffuser/lib/python3.8/site-packages/torchvision/transforms/transforms.py:332: UserWarning: Argument 'interpolation' of type int is deprecated since 0.13 and will be removed in 0.15. Please use InterpolationMode enum.
+  warnings.warn(
+Saved MemNet-VDVAE scores (6874 images) to /home/rothermm/brain-diffuser/results/assessor_scores/subj05/memnet_vdvae_sub05.pkl

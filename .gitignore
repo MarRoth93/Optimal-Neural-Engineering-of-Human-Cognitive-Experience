@@ -1,0 +1,13 @@
+# Ignore everything by default
+*
+
+# But allow scripts and slurm_scripts folders
+!scripts/**
+!slurm_scripts/**
+
+# Still ignore unwanted stuff inside them
+**/.ipynb_checkpoints/
+**/logs/
+__pycache__/
+*.pyc
+*.pyo
