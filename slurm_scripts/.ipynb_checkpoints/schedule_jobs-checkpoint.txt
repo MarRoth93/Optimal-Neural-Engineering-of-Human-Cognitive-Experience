@@ -1,9 +1,0 @@
-| Dependency           | Meaning                                                              |
-| -------------------- | -------------------------------------------------------------------- |
-| `after:<jobid>`      | Runs after the specified job *starts*                                |
-| `afterok:<jobid>`    | Runs only if the specified job finishes *successfully* (exit code 0) |
-| `afternotok:<jobid>` | Runs only if the specified job *fails*                               |
-| `afterany:<jobid>`   | Runs after the job ends, regardless of success or failure            |
-
-
-sbatch --dependency=afterok:7540144 09_versatilediff_reconstruct.sh 7

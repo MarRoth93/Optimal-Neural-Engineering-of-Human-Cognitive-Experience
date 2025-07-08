@@ -1,5 +1,0 @@
- 
-To activate the conda environment, type
-'source $CONDA_ROOT/bin/activate'
- 
-slurmstepd-hmemnode09: error: *** JOB 7630505 ON hmemnode09 CANCELLED AT 2025-07-02T10:18:08 ***
