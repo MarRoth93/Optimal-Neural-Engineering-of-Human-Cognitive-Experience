@@ -1,5 +1,0 @@
- 
-To activate the conda environment, type
-'source $CONDA_ROOT/bin/activate'
- 
-slurmstepd-gpunode05: error: *** JOB 7630806 ON gpunode05 CANCELLED AT 2025-07-02T10:28:55 ***
