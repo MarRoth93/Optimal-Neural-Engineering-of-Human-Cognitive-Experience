@@ -1,13 +1,25 @@
-# Ignore everything by default
+# — Ignore everything by default —
 *
 
-# But allow scripts and slurm_scripts folders
+# — But allow the scripts and slurm_scripts directories themselves —
+!scripts/
+!slurm_scripts/
+
+# — And everything inside them —
 !scripts/**
 !slurm_scripts/**
 
-# Still ignore unwanted stuff inside them
+# — Still ignore unwanted stuff inside those folders —
+# Jupyter checkpoint folders
 **/.ipynb_checkpoints/
+scripts/**/.ipynb_checkpoints/
+slurm_scripts/**/.ipynb_checkpoints/
+
+# Logs (everywhere) & specifically slurm_scripts/analysis/logs/
 **/logs/
+slurm_scripts/analysis/logs/
+
+# Python cache / bytecode
 __pycache__/
 *.pyc
 *.pyo

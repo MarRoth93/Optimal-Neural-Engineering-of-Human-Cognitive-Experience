@@ -1,0 +1,30 @@
+# Data Type  
+The data are Python dictionaries loaded from serialized pickle (`.pkl`) files. Each dictionary contains predicted scores for different manipulation levels (alpha values) applied to image features.  
+
+# Path  
+The data are stored at:  
+`/home/rothermm/brain-diffuser/results/assessor_scores/<sub>/emonet_vdvae_sub<sub>.pkl`  
+where `<sub>` refers to the subject identifier (1, 2, 5, or 7).  
+
+# Keys  
+Each dictionary has string keys representing different alpha manipulation levels:  
+`'alpha_-4', 'alpha_-3', 'alpha_-2', 'alpha_0', 'alpha_2', 'alpha_3', 'alpha_4'`  
+
+# Data  
+Each key maps to a list of floating-point values of length 982, corresponding to predicted emotional scores for 982 test images at the respective alpha level.  
+
+# Example Use  
+```python
+import pickle
+
+sub = 1
+path = f"/home/rothermm/brain-diffuser/results/assessor_scores/{sub}/emonet_vdvae_sub{sub:02d}.pkl"
+with open(path, "rb") as f:
+    data_vdvae = pickle.load(f)
+
+# List available alpha levels
+print(data_vdvae.keys())  # dict_keys(['alpha_-4', ..., 'alpha_4'])
+
+# Access scores at alpha=0
+alpha_0_scores = data_vdvae["alpha_0"]
+print(len(alpha_0_scores))  # 982
