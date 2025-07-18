@@ -1,6 +1,6 @@
 # Optimal Neural Engineering of Human Cognitive Experience
 
-The initial scripts and processing pipeline in the `scripts` directory originate from the [**brain-diffuser**](https://github.com/furkanozcelik/brain-diffuser) project by Furkan Ozcelik and Rufin VanRullen. These provide the base utilities for extracting features, running regressions and reconstructing images from brain data.
+The initial scripts and processing pipeline in the `scripts` directory originate from the [**brain-diffuser**](https://github.com/furkanozcelik/brain-diffuser) project by Furkan Ozcelik and Rufin VanRullen. These provide the base utilities for extracting features, running regressions and reconstructing images from brain data. Downloading the NSD-Dataset is explained there.
 
 ## Additions
 
