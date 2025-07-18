@@ -14,7 +14,7 @@ The `scripts/analysis` folder extends the original pipeline with analysis tools 
 - **`vdvae_reconstruct_images_thetas.py`** – Decodes VDVAE latent vectors manipulated by theta directions to create alpha‑level image sets.
 - **`vd_recon_thetas.py`** and **`vd_recon_thetas_memnet.py`** – Apply Versatile Diffusion to refine VDVAE images for EmoNet or MemNet‑based manipulations.
 - **`versatile_diffusion_reconstruct_images_thetas.py`** – Runs Versatile Diffusion on all VDVAE reconstructions conditioned on predicted CLIP features.
-- **`graphs.py`** and **`graphs_test.py`** – Load assessor scores and human behavioral data to produce plots of normalized scores, slope distributions and rate‑of‑change comparisons across subjects.
+- **`graphs.py`** – Load assessor scores and human behavioral data to produce plots of normalized scores, slope distributions and rate‑of‑change comparisons across subjects.
 - Jupyter notebooks such as `analyze_assessor_scores.ipynb` and `human_data_detrending.ipynb` provide additional exploratory analysis.
 
 These additions facilitate computing transformation directions, scoring and visualizing reconstructed images, and mapping manipulated latents back to brain space.
