@@ -1,3 +1,6 @@
+
+<img width="985" height="378" alt="Screenshot from 2025-07-18 15-10-59" src="https://github.com/user-attachments/assets/cbe55d09-9bef-4bee-9d2d-2b46ffe2e84c" />
+
 # Optimal Neural Engineering of Human Cognitive Experience
 
 The initial scripts and processing pipeline in the `scripts` directory originate from the [**brain-diffuser**](https://github.com/furkanozcelik/brain-diffuser) project by Furkan Ozcelik and Rufin VanRullen. These provide the base utilities for extracting features, running regressions and reconstructing images from brain data. Downloading the NSD-Dataset is explained there.
@@ -18,3 +21,6 @@ The `scripts/analysis` folder extends the original pipeline with analysis tools 
 - Jupyter notebooks such as `analyze_assessor_scores.ipynb` and `human_data_detrending.ipynb` provide additional exploratory analysis.
 
 These additions facilitate computing transformation directions, scoring and visualizing reconstructed images, and mapping manipulated latents back to brain space.
+
+<img width="1009" height="552" alt="Screenshot from 2025-07-18 15-10-47" src="https://github.com/user-attachments/assets/c98749a8-a2b0-4109-bc33-38349c5df071" />
+
