@@ -4,10 +4,13 @@
 # — But allow the scripts and slurm_scripts directories themselves —
 !scripts/
 !slurm_scripts/
+!results/
+!results/graphs/
 
 # — And everything inside them —
 !scripts/**
 !slurm_scripts/**
+!results/graphs/**
 
 # — Still ignore unwanted stuff inside those folders —
 # Jupyter checkpoint folders
