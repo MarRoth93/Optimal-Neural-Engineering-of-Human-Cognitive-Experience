@@ -1,5 +1,6 @@
 # — Ignore everything by default —
 *
+!README.md
 
 # — But allow the scripts and slurm_scripts directories themselves —
 !scripts/
