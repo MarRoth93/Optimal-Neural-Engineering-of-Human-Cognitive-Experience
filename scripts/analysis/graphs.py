@@ -227,6 +227,102 @@ def plot_normalized_mean_scores(model_data, human_data):
         print(f"📈 Saved plot: {out_path}")
 
 
+def plot_normalized_median_scores(model_data, human_data):
+    """
+    Generates plots comparing normalized median scores of models and humans.
+    1. By Subject: A 2x2 grid for each subject.
+    2. Averaged: A single plot with model scores averaged over subjects.
+
+    Args:
+        model_data (dict): Nested dictionary of model scores.
+        human_data (pd.DataFrame): DataFrame of human behavioral data.
+    """
+    if human_data is None:
+        print("Skipping median score plots due to missing human data.")
+        return
+
+    for net in NETWORKS:
+        # Select relevant conditions and human rating column for each network
+        if net == 'emonet':
+            conditions = ['valence-4', 'valence-2', 'alpha0', 'valence+2', 'valence+4']
+            human_col = 'ValenceRating'
+        else:
+            conditions = ['mem-4', 'mem-2', 'alpha0', 'mem+2', 'mem+4']
+            human_col = 'MemorabilityRating'
+
+        # Filter and aggregate human data (median per alpha)
+        human_net_df = human_data[human_data['Condition'].isin(conditions)]
+        human_medians = human_net_df.groupby('Alpha')[human_col].median().reindex(ALPHA_LEVELS_NUM)
+        human_norm = normalize_scores(human_medians)
+        df_human_plot = pd.DataFrame({
+            'Alpha': ALPHA_LEVELS_NUM,
+            'NormalizedScore': human_norm,
+            'Model': 'Human (median)'
+        })
+
+        # Plot 1: Per-Subject Comparison (medians)
+        fig_sub, axs_sub = plt.subplots(2, 2, figsize=(16, 12), sharex=True, sharey=True)
+        axs_flat = axs_sub.flatten()
+
+        for idx, sub in enumerate(SUBJECTS):
+            ax = axs_flat[idx]
+            # Human median curve (global across subjects for visual anchor)
+            ax.plot(df_human_plot['Alpha'], df_human_plot['NormalizedScore'],
+                    marker='o', label='Human (median)' if idx == 0 else None)
+
+            # Each model's normalized median scores for this subject
+            for model in MODELS:
+                if model_data[net][model][sub] is None:
+                    continue
+                medians = [np.median(model_data[net][model][sub][alpha]) for alpha in ALPHA_LEVELS_STR]
+                norm_medians = normalize_scores(medians)
+                ax.plot(ALPHA_LEVELS_NUM, norm_medians, marker='o',
+                        label=model if idx == 0 else None)
+
+            ax.set_title(f"Subject {sub:02d}")
+            ax.set_xticks(ALPHA_LEVELS_NUM)
+
+        fig_sub.supxlabel("Alpha Level", fontweight='bold')
+        fig_sub.supylabel("Normalized Median Score", fontweight='bold')
+        fig_sub.suptitle(f"{net.capitalize()} Network: Model vs. Human (Median) by Subject", fontsize=20)
+        fig_sub.legend(*axs_flat[0].get_legend_handles_labels(),
+                       title="Model", loc='center right')
+        plt.tight_layout(rect=[0, 0, 0.9, 0.95])
+
+        out_path = OUTPUT_DIR / f"scores_{net}_median_by_subject.png"
+        plt.savefig(out_path, dpi=300)
+        plt.close(fig_sub)
+        print(f"📈 Saved plot: {out_path}")
+
+        # Plot 2: Averaged Across Subjects (medians)
+        fig_avg, ax_avg = plt.subplots(figsize=(10, 7))
+        ax_avg.plot(df_human_plot['Alpha'], df_human_plot['NormalizedScore'],
+                    marker='o', label='Human (median)')
+
+        for model in MODELS:
+            subj_norms = []
+            for sub in SUBJECTS:
+                if model_data[net][model][sub] is None:
+                    continue
+                medians = [np.median(model_data[net][model][sub][alpha]) for alpha in ALPHA_LEVELS_STR]
+                subj_norms.append(normalize_scores(medians))
+            if subj_norms:
+                avg_norm = np.mean(np.vstack(subj_norms), axis=0)  # average of normalized subject medians
+                ax_avg.plot(ALPHA_LEVELS_NUM, avg_norm, marker='o', label=model)
+
+        ax_avg.set_title(f"{net.capitalize()} Network: Median Scores Averaged Across Subjects", fontsize=20)
+        ax_avg.set_xlabel("Alpha Level")
+        ax_avg.set_ylabel("Normalized Median Score")
+        ax_avg.set_xticks(ALPHA_LEVELS_NUM)
+        ax_avg.legend(title="Model")
+        plt.tight_layout()
+
+        out_path = OUTPUT_DIR / f"scores_{net}_median_averaged.png"
+        plt.savefig(out_path, dpi=300)
+        plt.close(fig_avg)
+        print(f"📈 Saved plot: {out_path}")
+
+
 def plot_slope_histograms(model_data):
     """
     Generates histograms of response slopes for each model.
@@ -469,6 +565,9 @@ def main():
     # Generate and save plots
     print("\n--- Generating Normalized Mean Score Plots ---")
     plot_normalized_mean_scores(model_data, human_data)
+
+    print("\n--- Generating Normalized Median Score Plots ---")
+    plot_normalized_median_scores(model_data, human_data)
 
     print("\n--- Generating Slope Distribution Plots ---")
     plot_slope_histograms(model_data)
