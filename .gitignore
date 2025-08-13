@@ -7,11 +7,13 @@
 !slurm_scripts/
 !results/
 !results/graphs/
+!results/metrics/
 
 # — And everything inside them —
 !scripts/**
 !slurm_scripts/**
 !results/graphs/**
+!results/metrics/**
 
 # — Still ignore unwanted stuff inside those folders —
 # Jupyter checkpoint folders

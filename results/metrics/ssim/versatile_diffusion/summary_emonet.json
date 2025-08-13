@@ -1,0 +1,146 @@
+[
+  {
+    "model":"versatile_diffusion",
+    "network":"emonet",
+    "subject":"subj01",
+    "alpha":"alpha -4",
+    "n":982,
+    "ssim_mean":0.0986412333,
+    "ssim_std":0.0595806722
+  },
+  {
+    "model":"versatile_diffusion",
+    "network":"emonet",
+    "subject":"subj01",
+    "alpha":"alpha -2",
+    "n":982,
+    "ssim_mean":0.1991385498,
+    "ssim_std":0.1093904752
+  },
+  {
+    "model":"versatile_diffusion",
+    "network":"emonet",
+    "subject":"subj01",
+    "alpha":"alpha 2",
+    "n":982,
+    "ssim_mean":0.1783616317,
+    "ssim_std":0.1086863006
+  },
+  {
+    "model":"versatile_diffusion",
+    "network":"emonet",
+    "subject":"subj01",
+    "alpha":"alpha 4",
+    "n":982,
+    "ssim_mean":0.1519111787,
+    "ssim_std":0.091133965
+  },
+  {
+    "model":"versatile_diffusion",
+    "network":"emonet",
+    "subject":"subj02",
+    "alpha":"alpha -4",
+    "n":982,
+    "ssim_mean":0.1364163536,
+    "ssim_std":0.0841522677
+  },
+  {
+    "model":"versatile_diffusion",
+    "network":"emonet",
+    "subject":"subj02",
+    "alpha":"alpha -2",
+    "n":982,
+    "ssim_mean":0.1921103596,
+    "ssim_std":0.1065670257
+  },
+  {
+    "model":"versatile_diffusion",
+    "network":"emonet",
+    "subject":"subj02",
+    "alpha":"alpha 2",
+    "n":982,
+    "ssim_mean":0.1873972108,
+    "ssim_std":0.1145779994
+  },
+  {
+    "model":"versatile_diffusion",
+    "network":"emonet",
+    "subject":"subj02",
+    "alpha":"alpha 4",
+    "n":982,
+    "ssim_mean":0.1690579212,
+    "ssim_std":0.1045716776
+  },
+  {
+    "model":"versatile_diffusion",
+    "network":"emonet",
+    "subject":"subj05",
+    "alpha":"alpha -4",
+    "n":982,
+    "ssim_mean":0.1154281122,
+    "ssim_std":0.0718087869
+  },
+  {
+    "model":"versatile_diffusion",
+    "network":"emonet",
+    "subject":"subj05",
+    "alpha":"alpha -2",
+    "n":982,
+    "ssim_mean":0.2013576041,
+    "ssim_std":0.1146055642
+  },
+  {
+    "model":"versatile_diffusion",
+    "network":"emonet",
+    "subject":"subj05",
+    "alpha":"alpha 2",
+    "n":982,
+    "ssim_mean":0.169751571,
+    "ssim_std":0.1038498983
+  },
+  {
+    "model":"versatile_diffusion",
+    "network":"emonet",
+    "subject":"subj05",
+    "alpha":"alpha 4",
+    "n":982,
+    "ssim_mean":0.1894367787,
+    "ssim_std":0.1106645264
+  },
+  {
+    "model":"versatile_diffusion",
+    "network":"emonet",
+    "subject":"subj07",
+    "alpha":"alpha -4",
+    "n":982,
+    "ssim_mean":0.1123134324,
+    "ssim_std":0.0727763863
+  },
+  {
+    "model":"versatile_diffusion",
+    "network":"emonet",
+    "subject":"subj07",
+    "alpha":"alpha -2",
+    "n":982,
+    "ssim_mean":0.1962958324,
+    "ssim_std":0.1114770187
+  },
+  {
+    "model":"versatile_diffusion",
+    "network":"emonet",
+    "subject":"subj07",
+    "alpha":"alpha 2",
+    "n":982,
+    "ssim_mean":0.1780751434,
+    "ssim_std":0.1082386805
+  },
+  {
+    "model":"versatile_diffusion",
+    "network":"emonet",
+    "subject":"subj07",
+    "alpha":"alpha 4",
+    "n":982,
+    "ssim_mean":0.1787261118,
+    "ssim_std":0.1060107718
+  }
+]
