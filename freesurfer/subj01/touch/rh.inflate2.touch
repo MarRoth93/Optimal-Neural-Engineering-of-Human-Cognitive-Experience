@@ -1,0 +1,1 @@
+mris_inflate -rusage /home/stone-ext1/freesurfer/subjects/FS6EXPERT_subj01_ver10/touch/rusage.mris_inflate.rh.dat -n 50 ../surf/rh.smoothwm ../surf/rh.inflated

@@ -1,0 +1,1 @@
+mri_watershed -rusage /home/stone-ext1/freesurfer/subjects/FS6EXPERT_subj01/touch/rusage.mri_watershed.dat -T1 -brain_atlas /home/stone/software/freesurfer_stable_600/average/RB_all_withskull_2016-05-10.vc700.gca transforms/talairach_with_skull.lta T1.mgz brainmask.auto.mgz

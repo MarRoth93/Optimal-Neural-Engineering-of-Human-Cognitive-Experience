@@ -27,6 +27,7 @@ slurm_scripts/**/.ipynb_checkpoints/
 # (This will also ignore freesurfer/logs/)
 **/logs/
 slurm_scripts/analysis/logs/
+/home/rothermm/brain-diffuser/freesurfer/license.txt
 
 # Python cache / bytecode
 __pycache__/

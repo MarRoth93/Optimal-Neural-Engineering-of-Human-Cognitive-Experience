@@ -1,0 +1,1 @@
+/home/stone/software/freesurfer_stable_600/bin/segmentSF_T1T2.sh /home/stone/software/freesurfer_stable_600/MCRv80 /home/stone/software/freesurfer_stable_600 FS6EXPERT_subj01 /home/stone-ext1/freesurfer/subjects /home/surly-raid1/kendrick-data/nsd/ppdata/NSD134-structurals/T2_0pt8_masked.nii.gz right HST1T2
