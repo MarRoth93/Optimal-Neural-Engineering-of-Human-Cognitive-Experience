@@ -1,0 +1,9 @@
+Logfile for pctsurfcon
+Sun Jun 23 05:39:54 CDT 2019
+setenv SUBJECTS_DIR /home/stone-ext1/freesurfer/subjects
+cd /home/stone-ext1/freesurfer/subjects/FS6EXPERT_subj01_ver10/scripts
+/home/stone/software/freesurfer_stable_600/bin/pctsurfcon
+$Id: pctsurfcon,v 1.15 2016/02/12 21:43:15 zkaufman Exp $
+Linux stone.cmrr.umn.edu 3.13.0-168-generic #218-Ubuntu SMP Thu Mar 14 16:56:08 UTC 2019 x86_64 x86_64 x86_64 GNU/Linux
+FREESURFER_HOME /home/stone/software/freesurfer_stable_600
+Cleaning up

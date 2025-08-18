@@ -133,6 +133,18 @@ def normalize_scores(scores):
     return (s_arr - min_val) / (max_val - min_val)
 
 
+def pearson_safe(a, b):
+    """Pearson r with safety checks; returns np.nan if not computable."""
+    a = np.asarray(a); b = np.asarray(b)
+    n = min(len(a), len(b))
+    if n < 2:
+        return np.nan
+    a = a[:n]; b = b[:n]
+    if np.nanstd(a) == 0 or np.nanstd(b) == 0:
+        return np.nan
+    return np.corrcoef(a, b)[0, 1]
+
+
 def plot_normalized_mean_scores(model_data, human_data):
     """
     Generates plots comparing normalized mean scores of models and humans.
@@ -547,6 +559,104 @@ def plot_rate_of_change_vs_human(human_df):
         plt.close()
         print(f"📈 Saved overall ROC vs human plot: {out_path}")
 
+def plot_alpha0_correlations(model_data):
+    """
+    Make two barplots (VDVAE, Versatile) showing correlation between:
+      - alpha_0 and image_to_image
+      - alpha_0 and each other alpha in [-4, -2, 2, 4]
+    Bars: EmoNet vs MemNet; values averaged across subjects with SEM error bars.
+    """
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+
+    # what to compare against alpha_0 (label, key in PKL)
+    comparisons = [
+        ("i2i", "i2i_key"),           # will resolve per model
+        ("alpha_-4", "alpha_-4"),
+        ("alpha_-2", "alpha_-2"),
+        ("alpha_2",  "alpha_2"),
+        ("alpha_4",  "alpha_4"),
+    ]
+    # pretty x-tick labels
+    xtick_labels = ["i2i", "α−4", "α−2", "α+2", "α+4"]
+
+    # model-specific key for the i2i baseline
+    i2i_key_for_model = {"vdvae": "vdvae_image_to_image",
+                         "versatile": "clip_image_to_image"}
+
+    for model in MODELS:  # 'vdvae' then 'versatile'
+        # collect per-network stats
+        stats = {net: {lbl: [] for (lbl, _) in comparisons} for net in NETWORKS}
+
+        for net in NETWORKS:  # 'emonet', 'memnet'
+            for sub in SUBJECTS:
+                d = model_data[net][model].get(sub)
+                if not d:
+                    continue
+                # base at alpha_0
+                base = d.get("alpha_0", None)
+                if base is None:
+                    continue
+
+                for lbl, key in comparisons:
+                    key_resolved = i2i_key_for_model[model] if key == "i2i_key" else key
+                    comp = d.get(key_resolved, None)
+                    if comp is None:
+                        # silently skip if missing for this subject
+                        continue
+                    r = pearson_safe(base, comp)
+                    if not np.isnan(r):
+                        stats[net][lbl].append(r)
+
+        # aggregate across subjects → mean & SEM
+        means = {net: [] for net in NETWORKS}
+        sems  = {net: [] for net in NETWORKS}
+        ns    = {net: [] for net in NETWORKS}
+
+        for net in NETWORKS:
+            for lbl, _ in comparisons:
+                vals = np.asarray(stats[net][lbl], dtype=float)
+                if vals.size == 0:
+                    means[net].append(np.nan)
+                    sems[net].append(np.nan)
+                    ns[net].append(0)
+                else:
+                    means[net].append(np.nanmean(vals))
+                    # SEM across subjects
+                    sems[net].append(np.nanstd(vals, ddof=1) / np.sqrt(np.sum(~np.isnan(vals))))
+                    ns[net].append(vals.size)
+
+        # ---- plot, two bars per group (EmoNet/MemNet) ----
+        x = np.arange(len(comparisons))
+        width = 0.38
+
+        fig, ax = plt.subplots(figsize=(10, 6))
+        em_col = ax.bar(x - width/2, means["emonet"], width,
+                        yerr=sems["emonet"], capsize=4, label="EmoNet")
+        mm_col = ax.bar(x + width/2, means["memnet"], width,
+                        yerr=sems["memnet"], capsize=4, label="MemNet")
+
+        ax.set_xticks(x)
+        ax.set_xticklabels(xtick_labels)
+        ax.set_ylabel("Pearson r (α=0 vs …)")
+        title_model = "VDVAE" if model == "vdvae" else "Versatile Diffusion"
+        ax.set_title(f"{title_model}: Correlation vs α=0 (averaged across subjects)")
+        ax.set_ylim(0, 1)  # typical range; remove if you prefer auto
+        ax.legend(title="Assessor")
+
+        # annotate N above bars (optional: comment out if not desired)
+        for net, bars in zip(["emonet", "memnet"], [em_col, mm_col]):
+            for idx, b in enumerate(bars):
+                n_here = ns[net][idx]
+                ax.text(b.get_x() + b.get_width()/2, b.get_height() + 0.02,
+                        f"n={n_here}", ha="center", va="bottom", fontsize=9)
+
+        plt.tight_layout()
+        out_path = OUTPUT_DIR / f"correlations_alpha0_{model}.png"
+        plt.savefig(out_path, dpi=300)
+        plt.close(fig)
+        print(f"📊 Saved: {out_path}")
+
+
 
 def main():
     """
@@ -576,6 +686,10 @@ def main():
     plot_rate_of_change_subjects()
     plot_rate_of_change_overall()
     plot_rate_of_change_vs_human(human_data)
+
+    print("\n--- Generating α=0 correlation barplots (i2i and other alphas) ---")
+    plot_alpha0_correlations(model_data)
+
 
     print("\n--- Script finished successfully ---")
 

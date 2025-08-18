@@ -1,0 +1,1 @@
+mri_normalize -f /home/stone-ext1/freesurfer/subjects/FS6EXPERT_subj01_ver10/tmp/control.dat -mprage -noconform -aseg aseg.presurf.mgz -mask brainmask.mgz norm.mgz brain.mgz
