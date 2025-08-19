@@ -2,32 +2,30 @@
 *
 !README.md
 
-# — But allow the scripts, slurm_scripts, results, and freesurfer directories —
+# — But allow the scripts, slurm_scripts, results directories —
 !scripts/
 !slurm_scripts/
 !results/
 !results/graphs/
 !results/metrics/
-!freesurfer/
 
 # — And everything inside them —
 !scripts/**
 !slurm_scripts/**
 !results/graphs/**
 !results/metrics/**
-!freesurfer/**
 
-# — Still ignore unwanted stuff inside those folders —
-# Jupyter checkpoint folders
+# Ignore freesurfer entirely
+freesurfer/
+
+# — Still ignore unwanted stuff inside other folders —
 **/.ipynb_checkpoints/
 scripts/**/.ipynb_checkpoints/
 slurm_scripts/**/.ipynb_checkpoints/
 
 # Logs (everywhere) & specifically slurm_scripts/analysis/logs/
-# (This will also ignore freesurfer/logs/)
 **/logs/
 slurm_scripts/analysis/logs/
-/home/rothermm/brain-diffuser/freesurfer/license.txt
 
 # Python cache / bytecode
 __pycache__/

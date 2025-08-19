@@ -7,6 +7,8 @@
 #SBATCH --partition=normal
 #SBATCH --output=/home/rothermm/brain-diffuser/slurm_scripts/analysis/logs/%x_%j.out
 #SBATCH --error=/home/rothermm/brain-diffuser/slurm_scripts/analysis/logs/%x_%j.err
+#SBATCH --chdir=/home/rothermm/brain-diffuser
+
 
 set -euo pipefail
 

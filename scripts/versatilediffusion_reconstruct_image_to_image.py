@@ -1,15 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-# Diffusion from VDVAE round-trip images + ORIGINAL CLIP embeddings
-# - Init latent: AutoKL( image_from /results/vdvae/image_to_image/{i}.png )
-# - Conditioning: original CLIP vision/text embeddings (npys you extracted)
-# - Output: /home/rothermm/brain-diffuser/results/versatile_diffusion/subjXX/original_latents/
-
-import sys
+import sys, os
 sys.path.append('/home/rothermm/brain-diffuser/versatile_diffusion')
 
-import os
+# (optional but robust) ensure relative paths inside the repo resolve correctly
+BASE_DIR = "/home/rothermm/brain-diffuser"
+os.chdir(BASE_DIR)
+
 import os.path as osp
 from pathlib import Path
 import argparse
@@ -23,7 +21,6 @@ import torchvision.transforms as tvtrans
 from lib.cfg_helper import model_cfg_bank
 from lib.model_zoo import get_model
 from lib.model_zoo.ddim_vd import DDIMSampler_VD
-from lib.experiments.sd_default import color_adjust  # not used but kept for parity
 from lib.model_zoo.vd import VD
 
 # ---------------- CLI ----------------
@@ -78,11 +75,13 @@ def main():
     net.load_state_dict(sd, strict=False)
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    net.clip = net.clip.to(device)
+    net.clip   = net.clip.to(device)
     net.autokl = net.autokl.to(device).half()
 
     sampler = DDIMSampler_VD(net)
+    # move diffusion UNet to device + fp16, AND set the custom attribute that ddIM code expects
     sampler.model.model.diffusion_model.to(device).half()
+    sampler.model.model.diffusion_model.device = device  # <<< crucial fix
 
     # --------- Load ORIGINAL CLIP inputs ---------
     clip_vision = np.load(args.clip_vision_npy)  # (N, 257, 768)
@@ -93,13 +92,13 @@ def main():
         N = min(N, args.limit)
 
     # --------- Prepare output ---------
-    outdir = osp.join(args.outdir_root, f"subj{args.sub:02d}", "original_latents")
+    outdir = osp.join(args.outdir_root, "image_to_image")
     Path(outdir).mkdir(parents=True, exist_ok=True)
 
     print(f"Using device: {device}")
     if device.type == "cuda":
         print(f"CUDA: {torch.cuda.get_device_name(device.index)}")
-    print(f"i2i input dir: {args.i2i-dir if hasattr(args, 'i2i-dir') else args.i2i_dir}")  # guard for IDEs
+    print(f"i2i input dir: {args.i2i_dir}")
     print(f"Vision: {args.clip_vision_npy} | Text: {args.clip_text_npy}")
     print(f"Output -> {outdir}")
     print(f"DDIM steps={args.ddim_steps}, strength={args.strength}, scale={args.scale}, mixing={args.mixing}")
@@ -107,13 +106,12 @@ def main():
 
     # --------- Schedule ---------
     ddim_steps = args.ddim_steps
-    ddim_eta = 0.0
-    sampler.make_schedule(ddim_num_steps=ddim_steps, ddim_eta=ddim_eta, verbose=False)
+    sampler.make_schedule(ddim_num_steps=ddim_steps, ddim_eta=0.0, verbose=False)
     t_enc = int(np.clip(args.strength, 0.0, 1.0) * ddim_steps)
 
     # Unconditional text/vision (empty prompt, black image)
-    utx = net.clip_encode_text("").to(device).half()                              # (1,77,768)
-    uim = net.clip_encode_vision(torch.zeros((1,3,224,224), device=device)).half()# (1,257,768)
+    utx = net.clip_encode_text("").to(device).half()                               # (1,77,768)
+    uim = net.clip_encode_vision(torch.zeros((1,3,224,224), device=device)).half() # (1,257,768)
 
     # --------- Loop ---------
     for i in range(N):
@@ -149,9 +147,8 @@ def main():
         # --- decode back to image, clamp and save ---
         x = net.autokl_decode(z)
         x = torch.clamp((x + 1.0) / 2.0, 0.0, 1.0)
-        Image.fromarray(tvtrans.ToPILImage()(x[0].detach().cpu()).convert("RGB")).save(
-            osp.join(outdir, f"{i}.png")
-        )
+        img = tvtrans.ToPILImage()(x[0].detach().cpu()).convert("RGB")
+        img.save(osp.join(outdir, f"{i}.png"))
 
     print("Done.")
 
