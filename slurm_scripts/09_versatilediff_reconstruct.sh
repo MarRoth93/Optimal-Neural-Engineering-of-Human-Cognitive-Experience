@@ -2,8 +2,8 @@
 
 #SBATCH --job-name=08_versatilediff_reconstruct
 #SBATCH --ntasks=1
-#SBATCH --output=logs/%x_sub%a_%j.out
-#SBATCH --error=logs/%x_sub%a_%j.err
+#SBATCH --output=/home/rothermm/brain-diffuser/logs/%x_sub%a_%j.out
+#SBATCH --error=/home/rothermm/brain-diffuser/logs/%x_sub%a_%j.err
 #SBATCH --time=00:10:00
 #SBATCH --gres=gpu:1
 #SBATCH --mem=128G

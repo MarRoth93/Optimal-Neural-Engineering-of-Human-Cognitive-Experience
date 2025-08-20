@@ -2,8 +2,8 @@
 
 #SBATCH --job-name=versdiff_recon_thetas_memnet
 #SBATCH --ntasks=1
-#SBATCH --output=/home/rothermm/brain-diffuser/slurm_scripts/logs/%x_sub%a_%j.out
-#SBATCH --error=/home/rothermm/brain-diffuser/slurm_scripts/logs/%x_sub%a_%j.err
+#SBATCH --output=/home/rothermm/brain-diffuser/logs/%x_sub%a_%j.out
+#SBATCH --error=/home/rothermm/brain-diffuser/logs/%x_sub%a_%j.err
 #SBATCH --time=10:00:00
 #SBATCH --gres=gpu:1
 #SBATCH --mem=128G

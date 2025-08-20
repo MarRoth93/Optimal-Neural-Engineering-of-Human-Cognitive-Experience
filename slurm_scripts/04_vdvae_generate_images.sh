@@ -2,8 +2,8 @@
 
 #SBATCH --job-name=03_reconstruction_vdvae
 #SBATCH --ntasks=1
-#SBATCH --output=logs/%x_%j.out
-#SBATCH --error=logs/%x_%j.err
+#SBATCH --output=/home/rothermm/brain-diffuser/logs/%x_%j.out
+#SBATCH --error=/home/rothermm/brain-diffuser/logs/%x_%j.err
 #SBATCH --time=00:10:00
 #SBATCH --gres=gpu:1
 #SBATCH --mem=128G

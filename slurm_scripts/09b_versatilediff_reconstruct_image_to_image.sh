@@ -5,8 +5,8 @@
 #SBATCH --mem=48G
 #SBATCH --time=04:00:00
 #SBATCH --partition=normal
-#SBATCH --output=/home/rothermm/brain-diffuser/slurm_scripts/analysis/logs/%x_%j.out
-#SBATCH --error=/home/rothermm/brain-diffuser/slurm_scripts/analysis/logs/%x_%j.err
+#SBATCH --output=/home/rothermm/brain-diffuser/logs/%x_%j.out
+#SBATCH --error=/home/rothermm/brain-diffuser/logs/%x_%j.err
 #SBATCH --chdir=/home/rothermm/brain-diffuser
 
 

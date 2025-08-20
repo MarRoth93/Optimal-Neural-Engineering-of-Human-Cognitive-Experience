@@ -2,8 +2,8 @@
 
 #SBATCH --job-name=ssim_all_models
 #SBATCH --ntasks=1
-#SBATCH --output=/home/rothermm/brain-diffuser/slurm_scripts/logs/%x_%j.out
-#SBATCH --error=/home/rothermm/brain-diffuser/slurm_scripts/logs/%x_%j.err
+#SBATCH --output=/home/rothermm/brain-diffuser/logs/%x_%j.out
+#SBATCH --error=/home/rothermm/brain-diffuser/logs/%x_%j.err
 #SBATCH --time=06:00:00
 #SBATCH --gres=gpu:1
 #SBATCH --mem=64G

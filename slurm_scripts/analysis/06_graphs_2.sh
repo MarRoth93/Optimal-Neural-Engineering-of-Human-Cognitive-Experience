@@ -6,8 +6,8 @@
 #SBATCH --mem=16G                  # total memory per node
 #SBATCH --time=00:30:00
 #SBATCH --partition=normal
-#SBATCH --output=logs/%x_%j.out
-#SBATCH --error=logs/%x_%j.err
+#SBATCH --output=/home/rothermm/brain-diffuser/logs/%x_%j.out
+#SBATCH --error=/home/rothermm/brain-diffuser/logs/%x_%j.err
 
 # --- SETUP ---
 echo "==== Job started on $(hostname) at $(date) ===="

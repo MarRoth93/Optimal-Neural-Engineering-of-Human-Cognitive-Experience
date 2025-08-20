@@ -148,8 +148,10 @@ def pearson_safe(a, b):
 def plot_normalized_mean_scores(model_data, human_data):
     """
     Generates plots comparing normalized mean scores of models and humans.
-    1. By Subject: A 2x2 grid for each subject.
-    2. Averaged: A single plot with model scores averaged over subjects.
+    1) By Subject: A 2x2 grid for each subject (unchanged).
+    2) Averaged: ONE figure with two side-by-side panels:
+         - Left: EmoNet averaged across subjects
+         - Right: MemNet averaged across subjects (human α = ±4 removed)
 
     Args:
         model_data (dict): Nested dictionary of model scores.
@@ -158,6 +160,12 @@ def plot_normalized_mean_scores(model_data, human_data):
     if human_data is None:
         print("Skipping mean score plots due to missing human data.")
         return
+
+    # Will collect averaged curves for both networks to plot side-by-side later
+    avg_store = {
+        'emonet': {'human_x': None, 'human_y': None, 'models': {}},
+        'memnet': {'human_x': None, 'human_y': None, 'models': {}},
+    }
 
     for net in NETWORKS:
         # Select relevant conditions and human rating column for each network
@@ -178,31 +186,41 @@ def plot_normalized_mean_scores(model_data, human_data):
             'Model': 'Human (mean)'
         })
 
-        # Plot 1: Per-Subject Comparison
+        # -----------------------------
+        # Plot 1: Per-Subject Comparison (UNCHANGED)
+        # -----------------------------
         fig_sub, axs_sub = plt.subplots(2, 2, figsize=(16, 12), sharex=True, sharey=True)
         axs_flat = axs_sub.flatten()
 
         for idx, sub in enumerate(SUBJECTS):
             ax = axs_flat[idx]
             # Plot human mean
-            ax.plot(df_human_plot['Alpha'], df_human_plot['NormalizedScore'],
-                    marker='o', label='Human (mean)' if idx == 0 else None)
+            ax.plot(
+                df_human_plot['Alpha'],
+                df_human_plot['NormalizedScore'],
+                marker='o',
+                label='Human (mean)' if idx == 0 else None
+            )
+
             # Plot each model's normalized mean scores for this subject
             for model in MODELS:
                 if model_data[net][model][sub] is None:
                     continue
                 means = [np.mean(model_data[net][model][sub][alpha]) for alpha in ALPHA_LEVELS_STR]
                 norm_means = normalize_scores(means)
-                ax.plot(ALPHA_LEVELS_NUM, norm_means,
-                        marker='o', label=model if idx == 0 else None)
+                ax.plot(
+                    ALPHA_LEVELS_NUM,
+                    norm_means,
+                    marker='o',
+                    label=model if idx == 0 else None
+                )
             ax.set_title(f"Subject {sub:02d}")
             ax.set_xticks(ALPHA_LEVELS_NUM)
 
         fig_sub.supxlabel("Alpha Level", fontweight='bold')
         fig_sub.supylabel("Normalized Mean Score", fontweight='bold')
         fig_sub.suptitle(f"{net.capitalize()} Network: Model vs. Human Scores by Subject", fontsize=20)
-        fig_sub.legend(*axs_flat[0].get_legend_handles_labels(),
-                       title="Model", loc='center right')
+        fig_sub.legend(*axs_flat[0].get_legend_handles_labels(), title="Model", loc='center right')
         plt.tight_layout(rect=[0, 0, 0.9, 0.95])
 
         out_path = OUTPUT_DIR / f"scores_{net}_by_subject.png"
@@ -210,11 +228,24 @@ def plot_normalized_mean_scores(model_data, human_data):
         plt.close(fig_sub)
         print(f"📈 Saved plot: {out_path}")
 
-        # Plot 2: Averaged Across Subjects
-        fig_avg, ax_avg = plt.subplots(figsize=(10, 7))
-        ax_avg.plot(df_human_plot['Alpha'], df_human_plot['NormalizedScore'],
-                    marker='o', label='Human (mean)')
+        # -----------------------------
+        # Collect data for Averaged Across Subjects (to plot side-by-side later)
+        # -----------------------------
+        # Human series: for MemNet averaged plot ONLY, drop α = -4 and +4
+        human_x = df_human_plot['Alpha'].to_numpy()
+        human_y = df_human_plot['NormalizedScore'].to_numpy()
+        if net == 'memnet':
+            keep_mask = ~np.isin(human_x, [-4, 4])
+            human_x_plot = human_x[keep_mask]
+            human_y_plot = human_y[keep_mask]
+        else:
+            human_x_plot = human_x
+            human_y_plot = human_y
 
+        avg_store[net]['human_x'] = human_x_plot
+        avg_store[net]['human_y'] = human_y_plot
+
+        # Model curves averaged across subjects
         for model in MODELS:
             subj_norms = []
             for sub in SUBJECTS:
@@ -223,20 +254,50 @@ def plot_normalized_mean_scores(model_data, human_data):
                 means = [np.mean(model_data[net][model][sub][alpha]) for alpha in ALPHA_LEVELS_STR]
                 subj_norms.append(normalize_scores(means))
             if subj_norms:
-                avg_norm = np.mean(np.vstack(subj_norms), axis=0)
-                ax_avg.plot(ALPHA_LEVELS_NUM, avg_norm, marker='o', label=model)
+                avg_norm = np.mean(np.vstack(subj_norms), axis=0)  # (5,)
+                avg_store[net]['models'][model] = avg_norm
+            else:
+                avg_store[net]['models'][model] = None  # no data for this model
 
-        ax_avg.set_title(f"{net.capitalize()} Network: Scores Averaged Across Subjects", fontsize=20)
-        ax_avg.set_xlabel("Alpha Level")
-        ax_avg.set_ylabel("Normalized Mean Score")
-        ax_avg.set_xticks(ALPHA_LEVELS_NUM)
-        ax_avg.legend(title="Model")
-        plt.tight_layout()
+    # -----------------------------
+    # Plot 2: Averaged Across Subjects — SIDE BY SIDE (EmoNet | MemNet)
+    # -----------------------------
+    fig_avg, axs = plt.subplots(1, 2, figsize=(16, 6), sharey=True)
 
-        out_path = OUTPUT_DIR / f"scores_{net}_averaged.png"
-        plt.savefig(out_path, dpi=300)
-        plt.close(fig_avg)
-        print(f"📈 Saved plot: {out_path}")
+    # Left panel: EmoNet
+    ax = axs[0]
+    ax.plot(avg_store['emonet']['human_x'], avg_store['emonet']['human_y'],
+            marker='o', label='Human (mean)')
+    for model in MODELS:
+        avg_norm = avg_store['emonet']['models'][model]
+        if avg_norm is not None:
+            ax.plot(ALPHA_LEVELS_NUM, avg_norm, marker='o', label=model)
+    ax.set_title("EmoNet Network: Scores Averaged Across Subjects", fontsize=16)
+    ax.set_xlabel("Alpha Level")
+    ax.set_ylabel("Normalized Mean Score")
+    ax.set_xticks(ALPHA_LEVELS_NUM)
+    ax.legend(title="Model")
+
+    # Right panel: MemNet (human α = ±4 removed)
+    ax = axs[1]
+    ax.plot(avg_store['memnet']['human_x'], avg_store['memnet']['human_y'],
+            marker='o', label='Human (mean)')
+    for model in MODELS:
+        avg_norm = avg_store['memnet']['models'][model]
+        if avg_norm is not None:
+            ax.plot(ALPHA_LEVELS_NUM, avg_norm, marker='o', label=model)
+    ax.set_title("MemNet Network: Scores Averaged Across Subjects", fontsize=16)
+    ax.set_xlabel("Alpha Level")
+    ax.set_xticks(ALPHA_LEVELS_NUM)
+    ax.legend(title="Model")
+
+    plt.tight_layout()
+    out_path = OUTPUT_DIR / "scores_averaged_side_by_side.png"
+    plt.savefig(out_path, dpi=300)
+    plt.close(fig_avg)
+    print(f"📈 Saved side-by-side averaged plot: {out_path}")
+
+
 
 
 def plot_normalized_median_scores(model_data, human_data):
@@ -489,86 +550,161 @@ def plot_rate_of_change_overall():
     print(f"📈 Saved overall ROC plot: {out_path}")
 
 
-def plot_rate_of_change_vs_human(human_df):
+def plot_rate_of_change_vs_human(human_df, prob_per_bin: bool = False):
     """
-    Overall rate‑of‑change vs. bootstrap‑resampled human, per network.
-    For each network, compares model rate-of-change distributions to a bootstrapped sample of human data.
+    Side-by-side plots (EmoNet left, MemNet right) comparing model ROC vs human.
+    - Uses real data only (no bootstrapping).
+    - MemNet ONLY: removes human samples at α = -4 and α = +4.
+    - prob_per_bin=True (default): each histogram's bar heights sum to 1.
+      If False: use probability density (area = 1).
 
     Args:
-        human_df (pd.DataFrame): DataFrame of human behavioral data.
+        human_df (pd.DataFrame): Human behavioral data.
+        prob_per_bin (bool): Normalize bars to sum to 1 (default) or use density.
     """
     # Map condition strings to alpha values
     alpha_map = {
         'valence-4': -4, 'valence-2': -2, 'alpha0': 0, 'valence+2': 2, 'valence+4': 4,
         'mem-4': -4, 'mem-2': -2, 'mem+2': 2, 'mem+4': 4
     }
+    human_df = human_df.copy()
     human_df['alpha'] = human_df['Condition'].map(alpha_map)
 
-    # Gather all human rate-of-change values for valence and memorability
-    all_val, all_mem = [], []
+    # --- Collect human ROC values with their alphas ---
+    all_val, all_val_alpha = [], []
+    all_mem, all_mem_alpha = [], []
     for sub in SUBJECTS:
         subdf = human_df[human_df['SubjectID'] == sub]
-        base_v = subdf[subdf['alpha'] == 0]['ValenceRating'].mean()
-        base_m = subdf[subdf['alpha'] == 0]['MemorabilityRating'].mean()
-        all_val.extend((subdf[subdf['alpha'] != 0]['ValenceRating'] / base_v).values)
-        all_mem.extend((subdf[subdf['alpha'] != 0]['MemorabilityRating'] / base_m).values)
 
-    human_val = np.array(all_val)
-    human_mem = np.array(all_mem)
-    rng = np.random.default_rng(123)
+        base_v = subdf.loc[subdf['alpha'] == 0, 'ValenceRating'].mean()
+        base_m = subdf.loc[subdf['alpha'] == 0, 'MemorabilityRating'].mean()
+
+        v_rows = subdf[(subdf['alpha'] != 0) & subdf['ValenceRating'].notna()]
+        if base_v and not np.isnan(base_v):
+            all_val.extend((v_rows['ValenceRating'] / base_v).to_numpy())
+            all_val_alpha.extend(v_rows['alpha'].to_numpy())
+
+        m_rows = subdf[(subdf['alpha'] != 0) & subdf['MemorabilityRating'].notna()]
+        if base_m and not np.isnan(base_m):
+            all_mem.extend((m_rows['MemorabilityRating'] / base_m).to_numpy())
+            all_mem_alpha.extend(m_rows['alpha'].to_numpy())
+
+    human_val = np.asarray(all_val, dtype=float)
+    human_val_alpha = np.asarray(all_val_alpha, dtype=int) if all_val_alpha else np.array([], dtype=int)
+    human_mem = np.asarray(all_mem, dtype=float)
+    human_mem_alpha = np.asarray(all_mem_alpha, dtype=int) if all_mem_alpha else np.array([], dtype=int)
+
     alphas = [-4, -3, -2, 2, 3, 4]
 
-    for net in NETWORKS:
-        # Gather all model rate-of-change values for this network
+    def weights_for(x):
+        return np.ones_like(x, dtype=float) / x.size if (x is not None and x.size) else np.array([])
+
+    # --- Helper to get model ROC arrays for a network ---
+    def get_model_rates(net: str):
         all_v, all_vs = [], []
         for sub in SUBJECTS:
-            dv = pickle.load(open(
-                MODEL_SCORE_DIR / f"subj{sub:02d}" / f"{net}_vdvae_sub{sub:02d}.pkl", "rb"
-            ))
-            dvs = pickle.load(open(
-                MODEL_SCORE_DIR / f"subj{sub:02d}" / f"{net}_versatile_sub{sub:02d}.pkl", "rb"
-            ))
-            base_v = np.array(dv["alpha_0"])
-            base_vs = np.array(dvs["alpha_0"])
-            all_v.append(np.concatenate([np.array(dv[f"alpha_{a}"])  / base_v  for a in alphas]))
-            all_vs.append(np.concatenate([np.array(dvs[f"alpha_{a}"]) / base_vs for a in alphas]))
+            dv_path  = MODEL_SCORE_DIR / f"subj{sub:02d}" / f"{net}_vdvae_sub{sub:02d}.pkl"
+            dvs_path = MODEL_SCORE_DIR / f"subj{sub:02d}" / f"{net}_versatile_sub{sub:02d}.pkl"
+            dv  = pickle.load(open(dv_path, "rb"))
+            dvs = pickle.load(open(dvs_path, "rb"))
 
-        rates_v  = np.concatenate(all_v)
-        rates_vs = np.concatenate(all_vs)
+            base_v  = np.asarray(dv["alpha_0"],  dtype=float)
+            base_vs = np.asarray(dvs["alpha_0"], dtype=float)
 
-        # Bootstrap human data to match model sample size
-        if net == 'emonet':
-            human_pool, human_label = human_val, 'Human Valence'
-        else:
-            human_pool, human_label = human_mem, 'Human Memorability'
-        human_boot = rng.choice(human_pool, size=len(rates_v), replace=True)
+            all_v.append(np.concatenate([np.asarray(dv[f"alpha_{a}"],  dtype=float) / base_v  for a in alphas]))
+            all_vs.append(np.concatenate([np.asarray(dvs[f"alpha_{a}"], dtype=float) / base_vs for a in alphas]))
+        return np.concatenate(all_v), np.concatenate(all_vs)
 
-        # Plot histograms for both models and bootstrapped human data
-        plt.figure(figsize=(10, 6))
-        plt.hist(rates_v,    bins=60, alpha=0.4, label=f"{net.capitalize()}‑VDVAE",    edgecolor="black")
-        plt.hist(rates_vs,   bins=60, alpha=0.4, label=f"{net.capitalize()}‑Versatile", edgecolor="black")
-        plt.hist(human_boot, bins=60, alpha=0.4, label=human_label,                  edgecolor="black")
-        plt.xlabel("Rate of Change per α‑unit")
-        plt.ylabel("Count")
-        plt.title(f"Overall Rate‑of‑Change: {net.capitalize()} vs. Human")
-        plt.legend()
-        plt.tight_layout()
+    # --- Gather data for both panels first (so we can share bins/xlim) ---
+    rates_v_emo, rates_vs_emo = get_model_rates('emonet')
+    human_pool_emo, human_label_emo = human_val, 'Human Valence'
 
-        out_path = OUTPUT_DIR / f"roc_vs_human_{net}.png"
-        plt.savefig(out_path, dpi=300)
-        plt.close()
-        print(f"📈 Saved overall ROC vs human plot: {out_path}")
+    rates_v_mem, rates_vs_mem = get_model_rates('memnet')
+    if human_mem_alpha.size:
+        keep = (human_mem_alpha != -4) & (human_mem_alpha != 4)
+        human_pool_mem = human_mem[keep]
+    else:
+        human_pool_mem = human_mem
+    human_label_mem = 'Human Memorability'
+
+    # If human pool is empty after filtering for memnet, warn but still plot models
+    if human_pool_mem.size == 0:
+        print("⚠️ No human samples for MemNet after filtering (±4 removed). Plotting models only.")
+
+    # --- Global bins across both panels for comparability ---
+    global_combined = np.concatenate([
+        rates_v_emo, rates_vs_emo, human_pool_emo,
+        rates_v_mem, rates_vs_mem,
+        human_pool_mem if human_pool_mem.size else np.array([])
+    ])
+    bins = np.histogram_bin_edges(global_combined, bins=60)
+
+    # --- Create side-by-side figure ---
+    fig, axs = plt.subplots(1, 2, figsize=(16, 6), sharey=True)
+
+    # Left: EmoNet
+    ax = axs[0]
+    if prob_per_bin:
+        ax.hist(rates_v_emo,    bins=bins, weights=weights_for(rates_v_emo),    alpha=0.4,
+                label="EmoNet-VDVAE", edgecolor="black")
+        ax.hist(rates_vs_emo,   bins=bins, weights=weights_for(rates_vs_emo),   alpha=0.4,
+                label="EmoNet-Versatile", edgecolor="black")
+        ax.hist(human_pool_emo, bins=bins, weights=weights_for(human_pool_emo), alpha=0.4,
+                label=human_label_emo, edgecolor="black")
+        ax.set_ylabel("Probability per bin (sums to 1)")
+    else:
+        ax.hist(rates_v_emo,    bins=bins, density=True, alpha=0.4, label="EmoNet-VDVAE",    edgecolor="black")
+        ax.hist(rates_vs_emo,   bins=bins, density=True, alpha=0.4, label="EmoNet-Versatile", edgecolor="black")
+        ax.hist(human_pool_emo, bins=bins, density=True, alpha=0.4, label=human_label_emo,   edgecolor="black")
+        ax.set_ylabel("Probability density")
+    ax.set_title("EmoNet")
+    ax.set_xlabel("Rate of Change per α-unit")
+    ax.legend()
+
+    # Right: MemNet
+    ax = axs[1]
+    if prob_per_bin:
+        ax.hist(rates_v_mem,    bins=bins, weights=weights_for(rates_v_mem),    alpha=0.4,
+                label="MemNet-VDVAE", edgecolor="black")
+        ax.hist(rates_vs_mem,   bins=bins, weights=weights_for(rates_vs_mem),   alpha=0.4,
+                label="MemNet-Versatile", edgecolor="black")
+        if human_pool_mem.size:
+            ax.hist(human_pool_mem, bins=bins, weights=weights_for(human_pool_mem), alpha=0.4,
+                    label=human_label_mem + " (±4 removed)", edgecolor="black")
+    else:
+        ax.hist(rates_v_mem,    bins=bins, density=True, alpha=0.4, label="MemNet-VDVAE",    edgecolor="black")
+        ax.hist(rates_vs_mem,   bins=bins, density=True, alpha=0.4, label="MemNet-Versatile", edgecolor="black")
+        if human_pool_mem.size:
+            ax.hist(human_pool_mem, bins=bins, density=True, alpha=0.4,
+                    label=human_label_mem + " (±4 removed)", edgecolor="black")
+    ax.set_title("MemNet")
+    ax.set_xlabel("Rate of Change per α-unit")
+    ax.legend()
+
+    fig.suptitle("Overall Rate-of-Change: Models vs. Human", fontsize=18, fontweight="bold")
+    plt.tight_layout(rect=[0, 0, 1, 0.93])
+
+    out_path = OUTPUT_DIR / "roc_vs_human_side_by_side.png"
+    plt.savefig(out_path, dpi=300)
+    plt.close(fig)
+    print(f"📈 Saved side-by-side ROC vs human plot: {out_path}")
+
+
+
+
 
 def plot_alpha0_correlations(model_data):
     """
-    Make two barplots (VDVAE, Versatile) showing correlation between:
-      - alpha_0 and image_to_image
-      - alpha_0 and each other alpha in [-4, -2, 2, 4]
-    Bars: EmoNet vs MemNet; values averaged across subjects with SEM error bars.
+    Side-by-side barplots for correlations with α=0.
+    Left: VDVAE; Right: Versatile Diffusion.
+    For each panel, bars show mean Pearson r (± SEM) between alpha_0 and:
+      - image_to_image (i2i)
+      - alpha in {-4, -2, +2, +4}
+    Two bars per x-tick: EmoNet vs MemNet; values averaged across subjects.
     """
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-    # what to compare against alpha_0 (label, key in PKL)
+    # What to compare against alpha_0 (label, key in PKL)
     comparisons = [
         ("i2i", "i2i_key"),           # will resolve per model
         ("alpha_-4", "alpha_-4"),
@@ -580,11 +716,13 @@ def plot_alpha0_correlations(model_data):
     xtick_labels = ["i2i", "α−4", "α−2", "α+2", "α+4"]
 
     # model-specific key for the i2i baseline
-    i2i_key_for_model = {"vdvae": "vdvae_image_to_image",
-                         "versatile": "clip_image_to_image"}
+    i2i_key_for_model = {
+        "vdvae": "vdvae_image_to_image",
+        "versatile": "clip_image_to_image"
+    }
 
-    for model in MODELS:  # 'vdvae' then 'versatile'
-        # collect per-network stats
+    def compute_means_sems_for_model(model: str):
+        """Return dicts: means[net], sems[net] as lists aligned with `comparisons`."""
         stats = {net: {lbl: [] for (lbl, _) in comparisons} for net in NETWORKS}
 
         for net in NETWORKS:  # 'emonet', 'memnet'
@@ -592,44 +730,41 @@ def plot_alpha0_correlations(model_data):
                 d = model_data[net][model].get(sub)
                 if not d:
                     continue
-                # base at alpha_0
                 base = d.get("alpha_0", None)
                 if base is None:
                     continue
-
                 for lbl, key in comparisons:
                     key_resolved = i2i_key_for_model[model] if key == "i2i_key" else key
                     comp = d.get(key_resolved, None)
                     if comp is None:
-                        # silently skip if missing for this subject
                         continue
                     r = pearson_safe(base, comp)
                     if not np.isnan(r):
                         stats[net][lbl].append(r)
 
-        # aggregate across subjects → mean & SEM
         means = {net: [] for net in NETWORKS}
         sems  = {net: [] for net in NETWORKS}
-        ns    = {net: [] for net in NETWORKS}
-
         for net in NETWORKS:
             for lbl, _ in comparisons:
                 vals = np.asarray(stats[net][lbl], dtype=float)
                 if vals.size == 0:
                     means[net].append(np.nan)
                     sems[net].append(np.nan)
-                    ns[net].append(0)
                 else:
                     means[net].append(np.nanmean(vals))
-                    # SEM across subjects
                     sems[net].append(np.nanstd(vals, ddof=1) / np.sqrt(np.sum(~np.isnan(vals))))
-                    ns[net].append(vals.size)
+        return means, sems
 
-        # ---- plot, two bars per group (EmoNet/MemNet) ----
-        x = np.arange(len(comparisons))
-        width = 0.38
+    # Prepare figure with two panels: left=VDVAE, right=Versatile
+    fig, axs = plt.subplots(1, 2, figsize=(16, 6), sharey=True)
+    panel_defs = [("vdvae", "VDVAE"), ("versatile", "Versatile Diffusion")]
 
-        fig, ax = plt.subplots(figsize=(10, 6))
+    x = np.arange(len(comparisons))
+    width = 0.38
+
+    for ax, (model_key, model_title) in zip(axs, panel_defs):
+        means, sems = compute_means_sems_for_model(model_key)
+
         em_col = ax.bar(x - width/2, means["emonet"], width,
                         yerr=sems["emonet"], capsize=4, label="EmoNet")
         mm_col = ax.bar(x + width/2, means["memnet"], width,
@@ -638,23 +773,32 @@ def plot_alpha0_correlations(model_data):
         ax.set_xticks(x)
         ax.set_xticklabels(xtick_labels)
         ax.set_ylabel("Pearson r (α=0 vs …)")
-        title_model = "VDVAE" if model == "vdvae" else "Versatile Diffusion"
-        ax.set_title(f"{title_model}: Correlation vs α=0 (averaged across subjects)")
-        ax.set_ylim(0, 1)  # typical range; remove if you prefer auto
+        ax.set_title(model_title)
+        ax.set_ylim(-0.2, 1.0)
         ax.legend(title="Assessor")
 
-        # annotate N above bars (optional: comment out if not desired)
+        # annotate bars with the actual score (mean Pearson r)
+        ymin, ymax = ax.get_ylim()
+        pad = 0.02 * (ymax - ymin)
         for net, bars in zip(["emonet", "memnet"], [em_col, mm_col]):
             for idx, b in enumerate(bars):
-                n_here = ns[net][idx]
-                ax.text(b.get_x() + b.get_width()/2, b.get_height() + 0.02,
-                        f"n={n_here}", ha="center", va="bottom", fontsize=9)
+                r_val = means[net][idx]
+                label = "NA" if np.isnan(r_val) else f"{r_val:.2f}"
+                ax.text(
+                    b.get_x() + b.get_width()/2,
+                    (0 if np.isnan(b.get_height()) else b.get_height()) + pad,
+                    label,
+                    ha="center", va="bottom", fontsize=9
+                )
 
-        plt.tight_layout()
-        out_path = OUTPUT_DIR / f"correlations_alpha0_{model}.png"
-        plt.savefig(out_path, dpi=300)
-        plt.close(fig)
-        print(f"📊 Saved: {out_path}")
+    fig.suptitle("Correlation vs α=0 (averaged across subjects)", fontsize=16, fontweight="bold")
+    plt.tight_layout(rect=[0, 0, 1, 0.93])
+
+    out_path = OUTPUT_DIR / "correlations_alpha0_side_by_side.png"
+    plt.savefig(out_path, dpi=300)
+    plt.close(fig)
+    print(f"📊 Saved: {out_path}")
+
 
 
 

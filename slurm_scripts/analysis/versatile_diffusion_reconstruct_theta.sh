@@ -1,8 +1,8 @@
 #!/bin/bash
 #SBATCH --job-name=versdiff_recon
 #SBATCH --ntasks=1
-#SBATCH --output=/home/rothermm/brain-diffuser/scripts/logs/versdiff_%j.out
-#SBATCH --error=/home/rothermm/brain-diffuser/scripts/logs/versdiff_%j.err
+#SBATCH --output=/home/rothermm/brain-diffuser/logs/versdiff_%j.out
+#SBATCH --error=/home/rothermm/brain-diffuser/logs/versdiff_%j.err
 #SBATCH --time=10:00:00
 #SBATCH --gres=gpu:1
 #SBATCH --mem=128G

@@ -1,8 +1,8 @@
 #!/bin/bash
 #SBATCH --job-name=prep_data_job
 #SBATCH --ntasks=1
-#SBATCH --output=logs/prep_data_%j.out
-#SBATCH --error=logs/prep_data_%j.err
+#SBATCH --output=/home/rothermm/brain-diffuser/logs/prep_data_%j.out
+#SBATCH --error=/home/rothermm/brain-diffuser/logs/prep_data_%j.err
 #SBATCH --time=01:30:00
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=128G

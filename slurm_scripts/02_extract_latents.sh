@@ -1,8 +1,8 @@
 #!/bin/bash
 #SBATCH --job-name=01_extract_latents
 #SBATCH --ntasks=1
-#SBATCH --output=logs/%x_%j.out
-#SBATCH --error=logs/%x_%j.err
+#SBATCH --output=/home/rothermm/brain-diffuser/logs/%x_%j.out
+#SBATCH --error=/home/rothermm/brain-diffuser/logs/%x_%j.err
 #SBATCH --time=08:00:00
 #SBATCH --gres=gpu:1
 #SBATCH --mem=128G
