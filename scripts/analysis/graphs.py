@@ -28,6 +28,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import matplotlib as mpl
 from pathlib import Path
+from scipy.stats import ttest_1samp, ttest_ind, shapiro, linregress
+from datetime import datetime
 
 # =============================================================================
 # --- Configuration ---
@@ -801,6 +803,337 @@ def plot_alpha0_correlations(model_data):
 
 
 
+# =============================================================================
+# === Statistics & Report Generation ==========================================
+# =============================================================================
+
+STAT_DIR = BASE_DIR / "results" / "statistics"
+
+def _safe_len(x):
+    return 0 if x is None else (len(x) if hasattr(x, "__len__") else 0)
+
+def _cohen_d_one_sample(sample, mu=0.0):
+    sample = np.asarray(sample, dtype=float)
+    sample = sample[np.isfinite(sample)]
+    if sample.size < 2:
+        return np.nan
+    return (sample.mean() - mu) / sample.std(ddof=1)
+
+def _cohen_d_independent(a, b):
+    """Hedges g (unbiased) for two independent samples (Welch t-compatible)."""
+    a = np.asarray(a, dtype=float)
+    b = np.asarray(b, dtype=float)
+    a = a[np.isfinite(a)]; b = b[np.isfinite(b)]
+    if a.size < 2 or b.size < 2:
+        return np.nan
+    na, nb = a.size, b.size
+    sa2, sb2 = a.var(ddof=1), b.var(ddof=1)
+    # Pooled SD (unweighted for Welch: use sqrt((sa2+sb2)/2))
+    sp = np.sqrt((sa2 + sb2) / 2.0) if (sa2>0 or sb2>0) else np.nan
+    if not np.isfinite(sp) or sp == 0:
+        return np.nan
+    d = (a.mean() - b.mean()) / sp
+    # Small-sample correction to Hedges g
+    J = 1 - (3 / (4*(na+nb) - 9))
+    return d * J
+
+def _describe_array(x):
+    x = np.asarray(x, dtype=float)
+    x = x[np.isfinite(x)]
+    if x.size == 0:
+        return dict(n=0, mean=np.nan, std=np.nan, min=np.nan, q1=np.nan,
+                    median=np.nan, q3=np.nan, max=np.nan)
+    return dict(
+        n=int(x.size),
+        mean=float(np.mean(x)),
+        std=float(np.std(x, ddof=1)) if x.size>1 else 0.0,
+        min=float(np.min(x)),
+        q1=float(np.quantile(x, 0.25)),
+        median=float(np.median(x)),
+        q3=float(np.quantile(x, 0.75)),
+        max=float(np.max(x)),
+    )
+
+def _model_curve_across_subjects(model_data, net, model, reducer="mean"):
+    """Return a 5‑length vector across ALPHA_LEVELS_STR averaged across subjects (after per‑subject normalization)."""
+    subj_norms = []
+    for sub in SUBJECTS:
+        d = model_data[net][model].get(sub)
+        if not d:
+            continue
+        try:
+            vals = [np.mean(d[a]) for a in ALPHA_LEVELS_STR]
+        except Exception:
+            continue
+        subj_norms.append(normalize_scores(vals))
+    if not subj_norms:
+        return None
+    arr = np.vstack(subj_norms)
+    return np.nanmean(arr, axis=0) if reducer == "mean" else np.nanmedian(arr, axis=0)
+
+def _human_curve(human_df, net):
+    if human_df is None:
+        return None
+    if net == 'emonet':
+        conditions = ['valence-4', 'valence-2', 'alpha0', 'valence+2', 'valence+4']
+        col = 'ValenceRating'
+    else:
+        conditions = ['mem-4', 'mem-2', 'alpha0', 'mem+2', 'mem+4']
+        col = 'MemorabilityRating'
+    df = human_df[human_df['Condition'].isin(conditions)]
+    means = df.groupby('Alpha')[col].mean().reindex(ALPHA_LEVELS_NUM)
+    return normalize_scores(means)
+
+def _collect_image_slopes_for(model_data, net, model):
+    """Return per-image slopes pooled across subjects (fit score ~ alpha)."""
+    slopes_all = []
+    for sub in SUBJECTS:
+        d = model_data[net][model].get(sub)
+        if not d:
+            continue
+        # Stack scores n_images x 5
+        try:
+            M = np.vstack([np.asarray(d[a], dtype=float) for a in ALPHA_LEVELS_STR]).T
+        except Exception:
+            continue
+        # compute slope per image (linear fit)
+        for row in M:
+            if np.all(np.isfinite(row)):
+                slope = np.polyfit(ALPHA_LEVELS_NUM, row, 1)[0]
+                slopes_all.append(slope)
+    return np.asarray(slopes_all, dtype=float) if slopes_all else np.array([], dtype=float)
+
+def _alpha_descriptives(model_data, human_df):
+    """Descriptive stats by alpha for (network × model × subject) and human means."""
+    rows = []
+    # Human
+    if human_df is not None:
+        for net in NETWORKS:
+            if net == 'emonet':
+                conds = ['valence-4', 'valence-2', 'alpha0', 'valence+2', 'valence+4']
+                col = 'ValenceRating'
+            else:
+                conds = ['mem-4', 'mem-2', 'alpha0', 'mem+2', 'mem+4']
+                col = 'MemorabilityRating'
+            df = human_df[human_df['Condition'].isin(conds)]
+            for alpha in ALPHA_LEVELS_NUM:
+                vals = df[df['Alpha']==alpha][col].to_numpy()
+                desc = _describe_array(vals)
+                rows.append(dict(kind="human", network=net, model="human", subject="all",
+                                 alpha=int(alpha), **desc))
+    # Models
+    for net in NETWORKS:
+        for model in MODELS:
+            for sub in SUBJECTS:
+                d = model_data[net][model].get(sub)
+                if not d:
+                    continue
+                for a_str, a_num in zip(ALPHA_LEVELS_STR, ALPHA_LEVELS_NUM):
+                    vals = np.asarray(d.get(a_str, []), dtype=float)
+                    desc = _describe_array(vals)
+                    rows.append(dict(kind="model", network=net, model=model, subject=f"{sub:02d}",
+                                     alpha=int(a_num), **desc))
+    return pd.DataFrame(rows)
+
+def _slope_tests(model_data):
+    """One‑sample tests of slope vs 0, and model‑vs‑model slope comparisons, per network."""
+    rows_1samp = []
+    rows_cmp = []
+    for net in NETWORKS:
+        # gather slopes per model
+        per_model = {m: _collect_image_slopes_for(model_data, net, m) for m in MODELS}
+        # one‑sample tests
+        for m, arr in per_model.items():
+            arr = arr[np.isfinite(arr)]
+            if arr.size >= 2:
+                t, p = ttest_1samp(arr, popmean=0.0, alternative='two-sided')
+                d = _cohen_d_one_sample(arr, 0.0)
+                # simple normality check (cap size for shapiro due to limits)
+                sw_n = min(arr.size, 5000)
+                sw_p = np.nan
+                try:
+                    sw_p = shapiro(arr[:sw_n]).pvalue
+                except Exception:
+                    pass
+                rows_1samp.append(dict(network=net, model=m, n=int(arr.size),
+                                       mean=float(arr.mean()), std=float(arr.std(ddof=1)),
+                                       t=float(t), p=float(p), cohen_d=float(d),
+                                       shapiro_p=float(sw_p) if np.isfinite(sw_p) else np.nan))
+            else:
+                rows_1samp.append(dict(network=net, model=m, n=int(arr.size),
+                                       mean=np.nan, std=np.nan, t=np.nan, p=np.nan,
+                                       cohen_d=np.nan, shapiro_p=np.nan))
+        # model vs model (Welch)
+        if len(MODELS) == 2:
+            a = per_model[MODELS[0]]
+            b = per_model[MODELS[1]]
+            a = a[np.isfinite(a)]; b = b[np.isfinite(b)]
+            if a.size >= 2 and b.size >= 2:
+                t, p = ttest_ind(a, b, equal_var=False)
+                d = _cohen_d_independent(a, b)
+            else:
+                t = p = d = np.nan
+            rows_cmp.append(dict(network=net, model_A=MODELS[0], model_B=MODELS[1],
+                                 n_A=int(a.size), n_B=int(b.size), t=float(t) if np.isfinite(t) else np.nan,
+                                 p=float(p) if np.isfinite(p) else np.nan,
+                                 cohen_d=float(d) if np.isfinite(d) else np.nan))
+    return pd.DataFrame(rows_1samp), pd.DataFrame(rows_cmp)
+
+def _curve_correlations(model_data, human_df):
+    """Pearson r between averaged model curves and human curves per network."""
+    rows = []
+    for net in NETWORKS:
+        human = _human_curve(human_df, net)
+        for model in MODELS:
+            curve = _model_curve_across_subjects(model_data, net, model, reducer="mean")
+            if curve is None or human is None:
+                r = np.nan
+            else:
+                # align (both length 5). For memnet, also report r with ±4 removed.
+                r = pearson_safe(curve, human)
+            rows.append(dict(network=net, model=model, pearson_r=float(r) if np.isfinite(r) else np.nan))
+        # MemNet optional: r with ±4 removed
+        if net == 'memnet' and human is not None:
+            keep = ~np.isin(ALPHA_LEVELS_NUM, [-4, 4])
+            for model in MODELS:
+                curve = _model_curve_across_subjects(model_data, net, model, reducer="mean")
+                if curve is None:
+                    r2 = np.nan
+                else:
+                    r2 = pearson_safe(curve[keep], human[keep])
+                rows.append(dict(network=net, model=model+" (±4 removed)", pearson_r=float(r2) if np.isfinite(r2) else np.nan))
+    return pd.DataFrame(rows)
+
+def _alpha_linear_trend_tests(model_data):
+    """
+    For each (network, model, subject), regress mean score across alphas on alpha level.
+    Returns slope, intercept, r, p, stderr. Also aggregates grand means across subjects.
+    """
+    rows = []
+    for net in NETWORKS:
+        for model in MODELS:
+            subj_slopes = []
+            for sub in SUBJECTS:
+                d = model_data[net][model].get(sub)
+                if not d:
+                    continue
+                y = []
+                for a in ALPHA_LEVELS_STR:
+                    arr = np.asarray(d.get(a, []), dtype=float)
+                    y.append(np.nanmean(arr) if arr.size else np.nan)
+                y = np.asarray(y, dtype=float)
+                if np.any(np.isfinite(y)):
+                    # handle potential NaNs by masking
+                    mask = np.isfinite(ALPHA_LEVELS_NUM) & np.isfinite(y)
+                    if mask.sum() >= 2:
+                        res = linregress(ALPHA_LEVELS_NUM[mask], y[mask])
+                        rows.append(dict(network=net, model=model, subject=f"{sub:02d}",
+                                         slope=res.slope, intercept=res.intercept,
+                                         r=res.rvalue, p=res.pvalue, stderr=res.stderr))
+                        subj_slopes.append(res.slope)
+            # aggregate slope across subjects
+            subj_slopes = np.asarray(subj_slopes, dtype=float)
+            if subj_slopes.size >= 2:
+                t, p = ttest_1samp(subj_slopes, 0.0)
+                rows.append(dict(network=net, model=model, subject="MEAN",
+                                 slope=float(subj_slopes.mean()),
+                                 intercept=np.nan, r=np.nan, p=float(p),
+                                 stderr=float(subj_slopes.std(ddof=1)/np.sqrt(subj_slopes.size))))
+            else:
+                rows.append(dict(network=net, model=model, subject="MEAN",
+                                 slope=np.nan, intercept=np.nan, r=np.nan, p=np.nan, stderr=np.nan))
+    return pd.DataFrame(rows)
+
+def generate_statistics_report(model_data, human_data):
+    """
+    Builds and saves a Markdown report summarizing core statistics.
+    """
+    STAT_DIR.mkdir(parents=True, exist_ok=True)
+
+    # 1) Descriptive stats by alpha
+    df_desc = _alpha_descriptives(model_data, human_data)
+
+    # 2) Slopes: one-sample vs 0 and model-vs-model
+    df_slope_1samp, df_slope_cmp = _slope_tests(model_data)
+
+    # 3) Curve correlations with human
+    df_corr = _curve_correlations(model_data, human_data)
+
+    # 4) Linear trend tests on mean per subject
+    df_trend = _alpha_linear_trend_tests(model_data)
+
+    # 5) Save CSVs alongside the report for convenience
+    csv_desc = STAT_DIR / "descriptives_by_alpha.csv"
+    csv_1s   = STAT_DIR / "slope_one_sample.csv"
+    csv_cmp  = STAT_DIR / "slope_model_vs_model.csv"
+    csv_corr = STAT_DIR / "model_vs_human_curve_correlations.csv"
+    csv_trnd = STAT_DIR / "alpha_linear_trend_tests.csv"
+    df_desc.to_csv(csv_desc, index=False)
+    df_slope_1samp.to_csv(csv_1s, index=False)
+    df_slope_cmp.to_csv(csv_cmp, index=False)
+    df_corr.to_csv(csv_corr, index=False)
+    df_trend.to_csv(csv_trnd, index=False)
+
+    # 6) Compose Markdown
+    ts = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    md_path = STAT_DIR / f"report_statistics_{ts}.md"
+
+    lines = []
+    lines.append("# Reconstruction Statistics Report")
+    lines.append("")
+    lines.append(f"_Generated: {datetime.now().isoformat(timespec='seconds')}_")
+    lines.append("")
+    lines.append("## Configuration")
+    lines.append(f"- Subjects: {SUBJECTS}")
+    lines.append(f"- Models: {MODELS}")
+    lines.append(f"- Networks: {NETWORKS}")
+    lines.append(f"- Alpha levels: {list(ALPHA_LEVELS_NUM)}")
+    lines.append("")
+    # Descriptives summary (aggregated over subjects per model/network/alpha)
+    lines.append("## Descriptive Statistics by Alpha (Models, pooled across subjects)")
+    df_desc_models = (df_desc[df_desc["kind"]=="model"]
+                      .assign(subject=lambda d: d["subject"].astype(str))
+                      .groupby(["network","model","alpha"], as_index=False)
+                      .agg(n=("n","sum"), mean=("mean","mean"), std=("std","mean"),
+                           min=("min","mean"), q1=("q1","mean"),
+                           median=("median","mean"), q3=("q3","mean"), max=("max","mean")))
+    lines.append(df_desc_models.to_markdown(index=False))
+    lines.append("")
+    if human_data is not None:
+        lines.append("## Human Ratings: Descriptive Statistics by Alpha")
+        df_desc_h = df_desc[df_desc["kind"]=="human"].copy()
+        lines.append(df_desc_h.to_markdown(index=False))
+        lines.append("")
+    # Slopes one-sample
+    lines.append("## Per-Image Slope Tests (One-sample vs 0)")
+    lines.append(df_slope_1samp.to_markdown(index=False))
+    lines.append("")
+    # Model vs Model
+    lines.append("## Per-Image Slope Comparison: Model A vs Model B (Welch t-test)")
+    lines.append(df_slope_cmp.to_markdown(index=False))
+    lines.append("")
+    # Curve correlations
+    lines.append("## Correlation Between Averaged Model Curves and Human Curves")
+    lines.append(df_corr.to_markdown(index=False))
+    lines.append("")
+    # Linear trend tests
+    lines.append("## Linear Trend of Mean Score vs Alpha (Per Subject)")
+    lines.append(df_trend.to_markdown(index=False))
+    lines.append("")
+    lines.append("## Files")
+    lines.append(f"- Descriptives CSV: `{csv_desc}`")
+    lines.append(f"- Slope (one-sample) CSV: `{csv_1s}`")
+    lines.append(f"- Slope (model-vs-model) CSV: `{csv_cmp}`")
+    lines.append(f"- Model–Human curve correlations CSV: `{csv_corr}`")
+    lines.append(f"- Linear trend tests CSV: `{csv_trnd}`")
+    lines.append("")
+
+    with open(md_path, "w", encoding="utf-8") as f:
+        f.write("\n".join(lines))
+
+    print(f"📝 Statistics report written to: {md_path}")
+
+
 
 def main():
     """
@@ -833,6 +1166,11 @@ def main():
 
     print("\n--- Generating α=0 correlation barplots (i2i and other alphas) ---")
     plot_alpha0_correlations(model_data)
+
+    print("\n--- Running statistical analyses & generating Markdown report ---")
+    generate_statistics_report(model_data, human_data)
+
+
 
 
     print("\n--- Script finished successfully ---")
