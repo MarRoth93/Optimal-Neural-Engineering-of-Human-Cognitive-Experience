@@ -3,9 +3,9 @@ import os
 from PIL import Image
 
 #The same for all subjects
-images = np.load('data/processed_data/subj01/nsd_test_stim_sub1.npy')
+images = np.load('/home/rothermm/brain-diffuser/data/processed_data/subj01/nsd_test_stim_sub1.npy')
 
-test_images_dir = 'data/nsddata_stimuli/test_images/'
+test_images_dir = '/home/rothermm/brain-diffuser/data/nsddata_stimuli/test_images/'
 
 if not os.path.exists(test_images_dir):
    os.makedirs(test_images_dir)

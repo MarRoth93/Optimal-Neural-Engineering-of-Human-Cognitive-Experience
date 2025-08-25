@@ -703,6 +703,10 @@ def plot_alpha0_correlations(model_data):
       - image_to_image (i2i)
       - alpha in {-4, -2, +2, +4}
     Two bars per x-tick: EmoNet vs MemNet; values averaged across subjects.
+
+    Updates:
+    - Single, shared legend for both panels.
+    - Bar annotations placed above error bars with larger padding to avoid overlap.
     """
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -764,6 +768,9 @@ def plot_alpha0_correlations(model_data):
     x = np.arange(len(comparisons))
     width = 0.38
 
+    # Keep handles from the first axis to build a single shared legend later
+    shared_handles, shared_labels = None, None
+
     for ax, (model_key, model_title) in zip(axs, panel_defs):
         means, sems = compute_means_sems_for_model(model_key)
 
@@ -774,32 +781,44 @@ def plot_alpha0_correlations(model_data):
 
         ax.set_xticks(x)
         ax.set_xticklabels(xtick_labels)
-        ax.set_ylabel("Pearson r (α=0 vs …)")
+        ax.set_ylabel("Pearson r")
         ax.set_title(model_title)
         ax.set_ylim(-0.2, 1.0)
-        ax.legend(title="Assessor")
 
-        # annotate bars with the actual score (mean Pearson r)
+        # annotation above bars (consider error bars + extra padding to avoid overlap)
         ymin, ymax = ax.get_ylim()
-        pad = 0.02 * (ymax - ymin)
+        pad = 0.06 * (ymax - ymin)  # increase if you still see overlaps
+
         for net, bars in zip(["emonet", "memnet"], [em_col, mm_col]):
             for idx, b in enumerate(bars):
                 r_val = means[net][idx]
                 label = "NA" if np.isnan(r_val) else f"{r_val:.2f}"
+                height = 0 if np.isnan(b.get_height()) else b.get_height()
+                err = 0 if np.isnan(sems[net][idx]) else sems[net][idx]
                 ax.text(
                     b.get_x() + b.get_width()/2,
-                    (0 if np.isnan(b.get_height()) else b.get_height()) + pad,
+                    height + err + pad,
                     label,
                     ha="center", va="bottom", fontsize=9
                 )
 
-    fig.suptitle("Correlation vs α=0 (averaged across subjects)", fontsize=16, fontweight="bold")
-    plt.tight_layout(rect=[0, 0, 1, 0.93])
+        # Capture legend handles/labels once (they're identical for both panels)
+        if shared_handles is None:
+            shared_handles, shared_labels = ax.get_legend_handles_labels()
+
+    # one shared legend for both panels (top-centered)
+    if shared_handles and shared_labels:
+        fig.legend(shared_handles, shared_labels, title="Assessor",
+                   loc="upper center", bbox_to_anchor=(0.5, 1.05), ncol=2)
+
+    fig.suptitle("Correlation vs α=0 (Averaged Across Subjects)", fontsize=16, fontweight="bold")
+    plt.tight_layout(rect=[0, 0, 1, 0.93])  # leave room on top for the shared legend
 
     out_path = OUTPUT_DIR / "correlations_alpha0_side_by_side.png"
     plt.savefig(out_path, dpi=300)
     plt.close(fig)
     print(f"📊 Saved: {out_path}")
+
 
 
 
