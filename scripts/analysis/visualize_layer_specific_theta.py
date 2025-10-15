@@ -6,28 +6,14 @@ Test the hypothesis that only high-layer theta manipulation produces consistent
 semantic changes across subjects, while low/mid-layer manipulations produce 
 subject-specific structural changes.
 
-This script reconstructs test images with different layer groups ze    # ========================================================================
-    # Load Subject Data
-    # ========================================================================
-    print("\n[3/5] Loading subject data...")
-    
-    subjects = [1, 2, 5, 7]
-    subject_data = {}
-    
-    for subject in subjects:
-        print(f"  Loading Subject {subject:02d}...")
-        
-        # Load predicted latents
-        pred_path = FEATURE_DIR / f'subj{subject:02d}' / 'nsd_vdvae_features_31l.npz'
-        pred_data = np.load(pred_path)
-        pred_latents = pred_data['test_latents']
-        
-        # Load hierarchical theta
-        theta_path = THETA_DIR / f'subj{subject:02d}' / f'theta_{args.assessor}_hierarchical_subject{subject}.npy'
-        theta = np.load(theta_path) zeroed (only mid+high active) - semantic changes
+This script reconstructs test images with different layer groups zeroed:
+1. Low layers zeroed (only mid+high active) - semantic changes
 2. Mid layers zeroed (only low+high active) - mixed changes
 3. High layers zeroed (only low+mid active) - structural changes
 4. Full theta (all layers active) - baseline
+
+IMPORTANT: Uses predicted latents from brain reconstruction (not ground truth)
+to match the theta computation in hierachical_theta from_reconstructions.ipynb
 
 Author: Brain Diffuser Analysis
 Date: 2025
@@ -58,6 +44,7 @@ from model_utils import *
 ASSESSOR_DIR = BASE_DIR / 'assessors'
 IMG_DIR = BASE_DIR / 'results' / 'vdvae'
 FEATURE_DIR = BASE_DIR / 'data' / 'extracted_features'
+PRED_FEATURE_DIR = BASE_DIR / 'data' / 'predicted_features'  # Predicted latents from brain activity
 THETA_DIR = BASE_DIR / 'results' / 'thetas_hierarchical'
 
 # ============================================================================
@@ -370,12 +357,13 @@ def main():
     for subject in subjects:
         print(f"  Loading Subject {subject:02d}...")
         
-        # Load predicted latents
-        pred_path = FEATURE_DIR / f'subj{subject:02d}' / 'nsd_vdvae_features_31l.npz'
-        pred_data = np.load(pred_path)
-        pred_latents = pred_data['test_latents']
+        # Load PREDICTED latents (from brain reconstruction - matches theta computation)
+        # Note: filename contains the actual subject number (sub1, sub2, sub5, sub7)
+        pred_path = PRED_FEATURE_DIR / f'subj{subject:02d}' / f'nsd_vdvae_nsdgeneral_pred_sub{subject}_31l_alpha50k.npy'
+        pred_latents = np.load(pred_path)
+        print(f"    Using PREDICTED latents from brain activity (not ground truth)")
         
-        # Load hierarchical theta
+        # Load hierarchical theta (computed from same predicted latents)
         theta_path = THETA_DIR / f'subj{subject:02d}' / f'theta_{args.assessor}_hierarchical_subject{subject}.npy'
         theta = np.load(theta_path)
         
