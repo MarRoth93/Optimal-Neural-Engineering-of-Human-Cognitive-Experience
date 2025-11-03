@@ -1,1 +1,0 @@
-mri_cc -aseg aseg.auto_noCCseg.mgz -o aseg.auto.mgz -lta /home/stone-ext1/freesurfer/subjects/FS6EXPERT_subj01/mri/transforms/cc_up.lta FS6EXPERT_subj01

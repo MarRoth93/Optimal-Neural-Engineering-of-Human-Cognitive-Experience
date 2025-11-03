@@ -1,1 +1,0 @@
-mris_ca_label -l ../label/lh.cortex.label -aseg ../mri/aseg.presurf.mgz -seed 1234 FS6EXPERT_subj01_ver10 lh ../surf/lh.sphere.reg /home/stone/software/freesurfer_stable_600/average/lh.DKaparc.atlas.acfb40.noaparc.i12.2016-08-02.gcs ../label/lh.aparc.annot
