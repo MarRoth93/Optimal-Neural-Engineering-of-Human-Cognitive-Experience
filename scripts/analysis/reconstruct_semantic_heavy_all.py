@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """
-Generate reconstructions using semantic_heavy theta for all subjects.
-This script reconstructs all test images for all subjects using the semantic_heavy
-theta variant across a range of alpha values.
+Generate reconstructions using all theta variants for all subjects.
+This script reconstructs all test images for all subjects using all theta
+variants (original, semantic_heavy, semantic_only, balanced, structural_heavy, 
+structural_only) across a range of alpha values.
 """
 import sys
 sys.path.append('/home/rothermm/brain-diffuser/vdvae')
@@ -22,7 +23,7 @@ from vae import VAE
 from model_utils import set_up_data, load_vaes
 
 # --- Parse arguments ---------------------------------------------------------
-parser = argparse.ArgumentParser(description='Reconstruct all images using semantic_heavy theta')
+parser = argparse.ArgumentParser(description='Reconstruct all images using all theta variants')
 parser.add_argument("-sub", "--sub", help="Subject Number", default=1, type=int)
 parser.add_argument("-bs", "--bs", help="Batch Size", default=30, type=int)
 args = parser.parse_args()
@@ -31,10 +32,10 @@ sub = args.sub
 assert sub in [1, 2, 5, 7], f"Subject must be in [1, 2, 5, 7], got {sub}"
 batch_size = args.bs
 
-print(f'=== Semantic Heavy Theta Reconstruction ===')
+print(f'=== Hybrid Theta Variants - Full Dataset Reconstruction ===')
 print(f'Subject: {sub}')
 print(f'Batch size: {batch_size}')
-print(f'Variant: semantic_heavy')
+print(f'Variants: all (6 variants)')
 print('Libs imported')
 
 # --- Define paths ------------------------------------------------------------
@@ -170,27 +171,38 @@ def sample_from_hier_latents(latents, sample_ids):
         sample_latents.append(torch.tensor(subset, device=device).float())
     return sample_latents
 
-# --- Load semantic_heavy theta for both assessors ----------------------------
-print(f'Loading semantic_heavy theta for subject {sub:02d}...')
+# --- Load all theta variants for both assessors ------------------------------
+print(f'Loading all theta variants for subject {sub:02d}...')
 ASSESSORS = ['emonet', 'memnet']
-VARIANT = 'semantic_heavy'
+VARIANTS = ['original', 'semantic_heavy', 'semantic_only', 'balanced', 'structural_heavy', 'structural_only']
 
 thetas = {}
 for assessor in ASSESSORS:
-    theta_path = THETA_DIR / f'subj{sub:02d}' / f'{assessor}_theta_{VARIANT}.npy'
-    if not theta_path.exists():
-        print(f'❌ ERROR: Theta not found: {theta_path}')
-        sys.exit(1)
-    thetas[assessor] = np.load(theta_path)
-    print(f'✓ Loaded {assessor}/{VARIANT}: {thetas[assessor].shape}')
+    thetas[assessor] = {}
+    for variant in VARIANTS:
+        theta_path = THETA_DIR / f'subj{sub:02d}' / f'{assessor}_theta_{variant}.npy'
+        if not theta_path.exists():
+            print(f'⚠️  Warning: Theta not found: {theta_path}')
+            continue
+        thetas[assessor][variant] = np.load(theta_path)
+        print(f'✓ Loaded {assessor}/{variant}: {thetas[assessor][variant].shape}')
+
+# Check if we have any thetas
+if not any(thetas.values()):
+    print('❌ ERROR: No theta vectors found. Exiting.')
+    sys.exit(1)
+
+print(f'\n✓ Loaded {sum(len(v) for v in thetas.values())} theta variants total')
 
 # --- Define alpha values -----------------------------------------------------
 ALPHAS = [-1.5, -1, -0.5, 0, 0.5, 1, 1.5]
 print(f'\nAlpha values: {ALPHAS}')
-print(f'Reconstructing all {n_images} images for subject {sub:02d}...\n')
+print(f'Reconstructing all {n_images} images for subject {sub:02d}...')
+print(f'Processing {len(ASSESSORS)} assessors × {len(VARIANTS)} variants × {len(ALPHAS)} alphas × {n_images} images')
+print(f'Total images to generate: {len(ASSESSORS) * len(VARIANTS) * len(ALPHAS) * n_images}\n')
 
 # --- Main reconstruction loop ------------------------------------------------
-total_images = len(ASSESSORS) * len(ALPHAS) * n_images
+total_images = len(ASSESSORS) * len(VARIANTS) * len(ALPHAS) * n_images
 progress_counter = 0
 
 for assessor in ASSESSORS:
@@ -198,60 +210,73 @@ for assessor in ASSESSORS:
     print(f'Processing {assessor.upper()}')
     print(f'{"="*70}')
     
-    theta = thetas[assessor]
-    
-    for alpha in ALPHAS:
-        print(f'\n  Alpha = {alpha}')
+    for variant in VARIANTS:
+        if variant not in thetas[assessor]:
+            print(f'\n  ⚠️  Skipping {variant} (not found)')
+            continue
+            
+        print(f'\n  Variant: {variant.upper()}')
+        theta = thetas[assessor][variant]
         
-        # Create output directory
-        out_dir = OUTPUT_DIR / f'subj{sub:02d}' / assessor / VARIANT / f'alpha_{alpha}'
-        out_dir.mkdir(parents=True, exist_ok=True)
-        
-        # Process in batches
-        num_batches = (n_images + batch_size - 1) // batch_size
-        
-        for batch_idx in range(num_batches):
-            start_idx = batch_idx * batch_size
-            end_idx = min(start_idx + batch_size, n_images)
-            batch_latents = pred_latents[start_idx:end_idx]
+        for alpha in ALPHAS:
+            print(f'    Alpha = {alpha}')
             
-            # Apply theta manipulation
-            if alpha == 0:
-                mod_latents = batch_latents
-            else:
-                mod_latents = batch_latents + alpha * theta
+            # Create output directory
+            out_dir = OUTPUT_DIR / f'subj{sub:02d}' / assessor / variant / f'alpha_{alpha}'
+            out_dir.mkdir(parents=True, exist_ok=True)
             
-            # Transform to hierarchical structure
-            hier = latent_transformation(mod_latents, ref_stats)
+            # Process in batches
+            num_batches = (n_images + batch_size - 1) // batch_size
             
-            # Sample from hierarchical latents
-            sample_ids = list(range(len(batch_latents)))
-            samp = sample_from_hier_latents(hier, sample_ids)
-            
-            # Decode
-            with torch.no_grad():
-                px_z = ema_vae.decoder.forward_manual_latents(len(samp[0]), samp, t=None)
-                sample_imgs = ema_vae.decoder.out_net.sample(px_z)
-            
-            # Save images
-            for i, img_array in enumerate(sample_imgs):
-                img_idx = start_idx + i
-                pil = Image.fromarray(img_array)
-                pil = pil.resize((512, 512), resample=Image.BILINEAR)
-                fname = f'img_{img_idx:03d}.png'
-                pil.save(out_dir / fname)
+            for batch_idx in range(num_batches):
+                start_idx = batch_idx * batch_size
+                end_idx = min(start_idx + batch_size, n_images)
+                batch_latents = pred_latents[start_idx:end_idx]
                 
-                progress_counter += 1
-                if progress_counter % 100 == 0:
-                    print(f'    Progress: {progress_counter}/{total_images} images ({100*progress_counter/total_images:.1f}%)')
+                # Apply theta manipulation
+                if alpha == 0:
+                    mod_latents = batch_latents
+                else:
+                    mod_latents = batch_latents + alpha * theta
+                
+                # Transform to hierarchical structure
+                hier = latent_transformation(mod_latents, ref_stats)
+                
+                # Sample from hierarchical latents
+                sample_ids = list(range(len(batch_latents)))
+                samp = sample_from_hier_latents(hier, sample_ids)
+                
+                # Decode
+                with torch.no_grad():
+                    px_z = ema_vae.decoder.forward_manual_latents(len(samp[0]), samp, t=None)
+                    sample_imgs = ema_vae.decoder.out_net.sample(px_z)
+                
+                # Save images
+                for i, img_array in enumerate(sample_imgs):
+                    img_idx = start_idx + i
+                    pil = Image.fromarray(img_array)
+                    pil = pil.resize((512, 512), resample=Image.BILINEAR)
+                    fname = f'img_{img_idx:03d}.png'
+                    pil.save(out_dir / fname)
+                    
+                    progress_counter += 1
+                    if progress_counter % 500 == 0:
+                        print(f'      Progress: {progress_counter}/{total_images} images ({100*progress_counter/total_images:.1f}%)')
+            
+            print(f'      ✓ Completed alpha={alpha}: {n_images} images saved')
         
-        print(f'    ✓ Completed alpha={alpha}: {n_images} images saved to {out_dir}')
+        print(f'    ✓ Completed variant: {variant}')
     
     print(f'\n✓ Completed {assessor}')
 
 print(f'\n{"="*70}')
 print(f'ALL RECONSTRUCTIONS COMPLETED FOR SUBJECT {sub:02d}')
 print(f'{"="*70}')
+print(f'Assessors: {len(ASSESSORS)}')
+print(f'Variants: {len(VARIANTS)}')
+print(f'Alphas: {len(ALPHAS)}')
+print(f'Images per condition: {n_images}')
 print(f'Total images generated: {progress_counter}')
+print(f'Expected: {len(ASSESSORS) * len(VARIANTS) * len(ALPHAS) * n_images}')
 print(f'Output directory: {OUTPUT_DIR / f"subj{sub:02d}"}')
 print(f'\n✓ Script completed successfully!')

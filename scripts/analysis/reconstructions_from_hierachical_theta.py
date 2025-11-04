@@ -182,7 +182,7 @@ def sample_from_hier_latents(latents, sample_ids):
 # --- Load hierarchical theta vectors for both assessors ----------------------
 print(f'Loading hybrid theta variants for subject {sub:02d}...')
 ASSESSORS = ['emonet', 'memnet']
-VARIANTS = ['original', 'semantic_heavy', 'semantic_only', 'balanced']
+VARIANTS = ['original', 'semantic_heavy', 'semantic_only', 'balanced', 'structural_heavy', 'structural_only']
 
 # Dictionary structure: thetas[assessor][variant] = theta_array
 thetas = {}
@@ -482,7 +482,9 @@ for assessor in thetas.keys():
         'original': 'lightgray',
         'semantic_heavy': 'lightcoral',
         'semantic_only': 'lightsalmon',
-        'balanced': 'lightgreen'
+        'balanced': 'lightgreen',
+        'structural_heavy': 'lightblue',
+        'structural_only': 'lightskyblue'
     }
     
     for row_idx, variant_name in enumerate(variants):
@@ -518,6 +520,10 @@ for assessor in thetas.keys():
                     label_text = 'SEMANTIC ONLY\n(1.0, 0.2, 0.0)\nMax structure preservation'
                 elif variant_name == 'balanced':
                     label_text = 'BALANCED\n(1.0, 0.6, 0.2)\nModerate all layers'
+                elif variant_name == 'structural_heavy':
+                    label_text = 'STRUCTURAL HEAVY\n(0.3, 0.6, 1.0)\nStrong structural focus'
+                elif variant_name == 'structural_only':
+                    label_text = 'STRUCTURAL ONLY\n(0.0, 0.2, 1.0)\nMax semantic preservation'
                 else:
                     label_text = variant_name.upper()
                 

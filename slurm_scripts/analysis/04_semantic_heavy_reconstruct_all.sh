@@ -1,33 +1,35 @@
 #!/bin/bash
 #
-# Semantic Heavy Theta - Full Dataset Reconstruction
+# Hybrid Theta Variants - Full Dataset Reconstruction
 #
-# This script reconstructs ALL test images using the semantic_heavy theta variant.
+# This script reconstructs ALL test images using ALL theta variants.
 # Unlike the comparison script (03_*), this processes the full dataset rather than
 # just a single image for visualization.
 #
-# Variant: semantic_heavy (1.0, 0.3, 0.05)
-#   - Strong emphasis on LOW layers (semantic/abstract features)
-#   - Reduced MID layer contribution (0.3)
-#   - Minimal HIGH layer contribution (0.05)
-#   - Best balance for semantic manipulation with structure preservation
+# Variants (6 total):
+#   - original (1.0, 1.0, 1.0): Baseline, no layer-specific weighting
+#   - semantic_heavy (1.0, 0.3, 0.05): Strong emphasis on LOW layers (semantic)
+#   - semantic_only (1.0, 0.2, 0.0): Only LOW layers active (semantic)
+#   - balanced (1.0, 0.6, 0.2): Moderate contribution from all layers
+#   - structural_heavy (0.3, 0.6, 1.0): Strong emphasis on HIGH layers (structural)
+#   - structural_only (0.0, 0.2, 1.0): Only HIGH layers active (structural)
 #
 # Alpha range: [-1.5, -1.0, -0.5, 0, 0.5, 1.0, 1.5]
 #   - Negative values: Decrease attribute (valence/memorability)
 #   - Zero: Baseline (no manipulation)
 #   - Positive values: Increase attribute
 #
-# Output: results/hybrid_theta_reconstructions/subj{XX}/{assessor}/semantic_heavy/alpha_{alpha}/
+# Output: results/hybrid_theta_reconstructions/subj{XX}/{assessor}/{variant}/alpha_{alpha}/
 #         Contains all test images (~982 per subject) at each alpha value
 #
 # Usage: sbatch 04_semantic_heavy_reconstruct_all.sh
 #
 
-#SBATCH --job-name=04_semantic_heavy_all
+#SBATCH --job-name=04_all_variants
 #SBATCH --ntasks=1
 #SBATCH --output=/home/rothermm/brain-diffuser/logs/%x_%j.out
 #SBATCH --error=/home/rothermm/brain-diffuser/logs/%x_%j.err
-#SBATCH --time=04:00:00
+#SBATCH --time=12:00:00
 #SBATCH --gres=gpu:1
 #SBATCH --mem=64G
 #SBATCH --partition=normal
@@ -51,15 +53,15 @@ subjects=(1 2 5 7)
 overall_status=0
 
 # Process all subjects sequentially
-# Each subject: 2 assessors × 7 alphas × ~982 images = ~13,748 images
-# Total across all subjects: ~54,992 images
+# Each subject: 2 assessors × 6 variants × 7 alphas × ~982 images = ~82,488 images
+# Total across all subjects: ~329,952 images
 
 for sub in "${subjects[@]}"; do
     echo "==== Reconstructing all images for subject $sub at $(date) ===="
-    echo "Variant: semantic_heavy (1.0, 0.3, 0.05)"
-    echo "Assessors: emonet, memnet"
-    echo "Alpha values: -1.5, -1.0, -0.5, 0, 0.5, 1.0, 1.5"
-    echo "Expected output: ~13,748 images per subject"
+    echo "Assessors: emonet, memnet (2 total)"
+    echo "Variants: original, semantic_heavy, semantic_only, balanced, structural_heavy, structural_only (6 total)"
+    echo "Alpha values: -1.5, -1.0, -0.5, 0, 0.5, 1.0, 1.5 (7 total)"
+    echo "Expected output: ~82,488 images per subject"
 
     python -u /home/rothermm/brain-diffuser/scripts/analysis/reconstruct_semantic_heavy_all.py \
         --sub "$sub" \
@@ -78,5 +80,5 @@ for sub in "${subjects[@]}"; do
 done
 
 echo "==== Job finished at $(date) with overall status: $overall_status ===="
-echo "Total images generated: ~54,992 (across 4 subjects)"
+echo "Total images generated: ~329,952 (across 4 subjects, 6 variants)"
 exit $overall_status
