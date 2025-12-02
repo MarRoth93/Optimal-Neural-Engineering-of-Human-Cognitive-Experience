@@ -5,22 +5,78 @@
 
 The initial scripts and processing pipeline in the `scripts` directory originate from the [**brain-diffuser**](https://github.com/furkanozcelik/brain-diffuser) project by Furkan Ozcelik and Rufin VanRullen. These provide the base utilities for extracting features, running regressions and reconstructing images from brain data. Downloading the NSD-Dataset is explained there.
 
-## Additions
+## Data preparation
 
-The `scripts/analysis` folder extends the original pipeline with analysis tools and further reconstruction scripts:
+The data preparation pipeline processes the Natural Scenes Dataset (NSD) fMRI data and reconstructs images from brain activity using a hierarchical approach combining VDVAE latent representations with Versatile Diffusion models.
 
-- **`brain_mapping.py`** – Loads predicted fMRI volumes, converts them to NIfTI format and computes normalized contrast maps between manipulation conditions.
-- **`compute_assessor_scores.py`** – Evaluates generated images with EmoNet and MemNet, gathering scores across different alpha manipulations for both VDVAE and Versatile Diffusion outputs.
-- **`compute_theta.py`** – Computes direction vectors ("theta") for EmoNet and MemNet by contrasting the top and bottom responses to VDVAE reconstructions.
-- **`map_latents_to_fmri.py`** – Maps manipulated latents to fMRI using ridge regression, saving predicted volumes and difference maps.
-- **`map_latents_to_fmri_no_negative.py`** – Variant of the above that also produces contrast maps with negative values set to zero.
-- **`vdvae_reconstruct_images_thetas.py`** – Decodes VDVAE latent vectors manipulated by theta directions to create alpha‑level image sets.
-- **`vd_recon_thetas.py`** and **`vd_recon_thetas_memnet.py`** – Apply Versatile Diffusion to refine VDVAE images for EmoNet or MemNet‑based manipulations.
-- **`versatile_diffusion_reconstruct_images_thetas.py`** – Runs Versatile Diffusion on all VDVAE reconstructions conditioned on predicted CLIP features.
-- **`graphs.py`** – Load assessor scores and human behavioral data to produce plots of normalized scores, slope distributions and rate‑of‑change comparisons across subjects.
-- Jupyter notebooks such as `analyze_assessor_scores.ipynb` and `human_data_detrending.ipynb` provide additional exploratory analysis.
+### Pipeline Overview
 
-These additions facilitate computing transformation directions, scoring and visualizing reconstructed images, and mapping manipulated latents back to brain space.
+1. **Preprocessing** (`01_prep_data_job.sh`)
+   - Preprocesses fMRI data, stimuli images, and CLIP embeddings (vision and text)
+   - Prepares data structures for all subjects (1, 2, 5, 7)
+
+2. **Feature Extraction** (`02_extract_latents.sh`)
+   - Extracts VDVAE latent features from stimuli images
+   - Creates hierarchical latent representations for reconstruction
+
+3. **Brain-to-Latent Regression** (`03_train_regressor.sh`)
+   - Trains Ridge regression models mapping fMRI activity to VDVAE latent space
+   - Saves regression weights for each subject
+
+4. **Initial Reconstruction** (`04_vdvae_generate_images.sh` & `04b_vdvae_image_to_image.sh`)
+   - Generates reconstructed images from predicted VDVAE latents
+   - Validates encoder-decoder pipeline with roundtrip tests
+
+5. **CLIP Feature Processing** (`05-08_cliptext/vision_extraction/regression.sh`)
+   - Extracts CLIP text and vision embeddings from images
+   - Trains fMRI-to-CLIP regression models for guidance signals
+
+6. **Final Reconstruction** (`09_versatilediff_reconstruct.sh` & `09b`)
+   - Uses Versatile Diffusion conditioned on predicted latents
+   - Refines reconstructions with CLIP vision and text guidance
+   - Produces high-quality final reconstructed images
+
+
+
+## Data Analysis
+
+The analysis pipeline investigates how latent space manipulations affect reconstruction quality, memorability, and emotional content through theta-based optimization.
+
+### Analysis Overview
+
+1. **Theta Computation** (`01_compute_theta.sh`)
+   - Computes optimization direction vectors from EmoNet (emotion) and MemNet (memorability) assessors
+   - Identifies latent space directions that maximize memorability and emotional valence
+
+2. **Theta-Based Reconstruction** (`02_vdvae_reconstruct_theta.sh` & `04_vd_reconstruct_theta.sh`)
+   - Generates reconstructions with theta modifications at multiple alpha levels (α = -4, -2, 0, +2, +4)
+   - Creates images optimized for high/low memorability and emotion
+
+3. **Quality Assessment** (`03_assessor_scores.sh`, `07_ssim.sh`, `10_pixel_corr.sh`)
+   - Computes EmoNet and MemNet scores for all reconstructions
+   - Measures Structural Similarity Index (SSIM) and pixel-wise correlations
+   - Quantifies reconstruction fidelity and perceptual quality
+
+4. **Brain Mapping** (`05_map_latents_to_fmri.sh`)
+   - Reverse maps manipulated latents back to predicted fMRI patterns
+   - Generates NIfTI brain images showing how latent manipulations affect neural activity
+   - Creates contrast maps comparing brain responses to different theta manipulations
+
+5. **Statistical Analysis** (`08_statistics.sh`)
+   - Performs significance testing on reconstruction quality differences
+   - Validates theta optimization effects across subjects and conditions
+
+6. **Visualization** (`06_graphs_final.sh`)
+   - Generates publication-quality graphs and figures
+   - Visualizes assessor scores, reconstruction metrics, and theta effects
+
+7. **Human Behavioral Validation**
+   - **`human_data_detrending.ipynb`**: Preprocesses human ratings data, removes order effects
+   - **`analyze_human_data.ipynb`**: A priori statistical analysis justifying alpha level exclusion decisions based on linearity, monotonicity, and image quality degradation
+
+
+
+
 
 <img width="1009" height="552" alt="Screenshot from 2025-07-18 15-10-47" src="https://github.com/user-attachments/assets/c98749a8-a2b0-4109-bc33-38349c5df071" />
 
