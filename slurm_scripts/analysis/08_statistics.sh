@@ -11,7 +11,7 @@
 #SBATCH --error=/home/rothermm/brain-diffuser/logs/%x_%j.err
 
 # --- PATHS ---
-PY_FILE="/home/rothermm/brain-diffuser/scripts/analysis/statistics_test.py"
+PY_FILE="/home/rothermm/brain-diffuser/scripts/analysis/08_statistics_test.py"
 LOG_DIR="/home/rothermm/brain-diffuser/slurm_scripts/logs"
 mkdir -p "/home/rothermm/brain-diffuser/logs" "${LOG_DIR}"
 

@@ -26,7 +26,7 @@ I2I_DIR="/home/rothermm/brain-diffuser/results/vdvae/image_to_image"
 CLIP_VISION="/home/rothermm/brain-diffuser/data/extracted_features/subj${SUB}/nsd_clipvision_test.npy"
 CLIP_TEXT="/home/rothermm/brain-diffuser/data/extracted_features/subj${SUB}/nsd_cliptext_test.npy"
 
-python -u /home/rothermm/brain-diffuser/scripts/versatilediffusion_reconstruct_image_to_image.py \
+python -u /home/rothermm/brain-diffuser/scripts/09b_versatilediffusion_reconstruct_image_to_image.py \
   -sub ${SUB} \
   --i2i-dir "${I2I_DIR}" \
   --clip-vision-npy "${CLIP_VISION}" \

@@ -15,7 +15,7 @@ echo "Job ID: ${SLURM_JOB_ID}"
 echo "Working Directory: $(pwd)"
 
 # --- PATHS & DEFAULTS ---
-PY_FILE="/home/rothermm/brain-diffuser/scripts/analysis/pixel_corr.py"
+PY_FILE="/home/rothermm/brain-diffuser/scripts/analysis/10_pixel_corr.py"
 BASE_RESULTS="/home/rothermm/brain-diffuser/results"
 BASE_DATA="/home/rothermm/brain-diffuser/data"
 OUT_DIR="${BASE_RESULTS}/metrics/pixcorr"

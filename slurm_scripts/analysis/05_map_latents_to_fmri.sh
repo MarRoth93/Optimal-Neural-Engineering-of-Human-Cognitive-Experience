@@ -34,7 +34,7 @@ for sub in "${subjects[@]}"; do
     echo "==== Starting subject $sub at $(date) ===="
     
     # Using relative path for the tee log file
-    python -u /home/rothermm/brain-diffuser/scripts/analysis/map_latents_to_fmri.py --sub "$sub" \
+    python -u /home/rothermm/brain-diffuser/scripts/analysis/05_map_latents_to_fmri.py --sub "$sub" \
     2>&1 | tee logs/${SLURM_JOB_NAME}_sub${sub}_${SLURM_JOB_ID}.log
 
     # Check the exit status of the python script (the left side of the pipe)

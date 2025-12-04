@@ -22,7 +22,7 @@ overall_status=0
 
 for sub in "${subjects[@]}"; do
     echo "==== Running for subject $sub at $(date) ===="
-    python -u /home/rothermm/brain-diffuser/scripts/vdvae_extract_features.py --sub "$sub" --bs 30 \
+    python -u /home/rothermm/brain-diffuser/scripts/02_vdvae_extract_features.py --sub "$sub" --bs 30 \
     2>&1 | tee logs/${SLURM_JOB_NAME}_sub${sub}_${SLURM_JOB_ID}.log
 
     if [ "${PIPESTATUS[0]}" -ne 0 ]; then

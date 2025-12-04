@@ -45,7 +45,7 @@ echo "Activated Conda environment: $(which python)"
 # --- JOB LOGIC ---
 echo "==== Starting Versatile Diffusion for subject ${SUBJECT_ID} at $(date) ===="
 
-python -u /home/rothermm/brain-diffuser/scripts/analysis/vd_recon_thetas.py \
+python -u /home/rothermm/brain-diffuser/scripts/analysis/04_vd_recon_thetas.py \
     --sub "${SUBJECT_ID}" \
     2>&1 | tee /home/rothermm/brain-diffuser/slurm_scripts/logs/versdiff_sub${SUBJECT_ID}_${SLURM_JOB_ID}.log
 

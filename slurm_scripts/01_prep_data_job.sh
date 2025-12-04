@@ -29,7 +29,7 @@ echo "Activated Conda environment: $(which python)"
 
 # Run script with passed arguments
 echo "Starting prepare_nsddata.py with args: $@"
-python -u prepare_nsddata.py "$@" | tee logs/prep_data_${SLURM_JOB_ID}.debug.log
+python -u 01_prepare_nsddata.py "$@" | tee logs/prep_data_${SLURM_JOB_ID}.debug.log
 
 echo "==== Job finished at $(date) ===="
 

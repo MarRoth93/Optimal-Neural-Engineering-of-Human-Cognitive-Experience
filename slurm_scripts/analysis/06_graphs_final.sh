@@ -27,7 +27,7 @@ echo "Activated Conda environment: $(which python)"
 overall_status=0
 
 echo "==== Running graphs.py at $(date) ===="
-python -u /home/rothermm/brain-diffuser/scripts/analysis/graphs_final.py \
+python -u /home/rothermm/brain-diffuser/scripts/analysis/06_graphs_final.py \
     2>&1 | tee logs/${SLURM_JOB_NAME}_${SLURM_JOB_ID}.log
 
 if [ "${PIPESTATUS[0]}" -ne 0 ]; then

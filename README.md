@@ -62,13 +62,13 @@ The analysis pipeline investigates how latent space manipulations affect reconst
    - Generates NIfTI brain images showing how latent manipulations affect neural activity
    - Creates contrast maps comparing brain responses to different theta manipulations
 
-5. **Statistical Analysis** (`08_statistics.sh`)
-   - Performs significance testing on reconstruction quality differences
-   - Validates theta optimization effects across subjects and conditions
-
-6. **Visualization** (`06_graphs_final.sh`)
+5. **Visualization** (`06_graphs_final.sh`)
    - Generates publication-quality graphs and figures
    - Visualizes assessor scores, reconstruction metrics, and theta effects
+
+6. **Statistical Analysis** (`08_statistics.sh`)
+   - Performs significance testing on reconstruction quality differences
+   - Validates theta optimization effects across subjects and conditions
 
 7. **Human Behavioral Validation**
    - **`human_data_detrending.ipynb`**: Preprocesses human ratings data, removes order effects

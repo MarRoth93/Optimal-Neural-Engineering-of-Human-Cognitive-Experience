@@ -30,7 +30,7 @@ overall_status=0
 for sub in "${subjects[@]}"; do
     echo "==== Reconstructing subject $sub at $(date) ===="
 
-    python -u /home/rothermm/brain-diffuser/scripts/analysis/vdvae_reconstruct_images_thetas.py \
+    python -u /home/rothermm/brain-diffuser/scripts/analysis/02_vdvae_reconstruct_images_thetas.py \
         --sub "$sub" \
         2>&1 | tee logs/${SLURM_JOB_NAME}_sub${sub}_${SLURM_JOB_ID}.log
 

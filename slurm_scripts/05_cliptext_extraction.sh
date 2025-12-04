@@ -26,7 +26,7 @@ overall_status=0
 for sub in "${subjects[@]}"; do
     echo "==== Starting subject $sub at $(date) ===="
     # Execute the python script, tee output to a log file
-    python -u /home/rothermm/brain-diffuser/scripts/cliptext_extract_features.py --sub "$sub" \
+    python -u /home/rothermm/brain-diffuser/scripts/05_cliptext_extract_features.py --sub "$sub" \
     2>&1 | tee logs/${SLURM_JOB_NAME}_sub${sub}_${SLURM_JOB_ID}.log
 
     # Check the exit status of the python script (the left side of the pipe)

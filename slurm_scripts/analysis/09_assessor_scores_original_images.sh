@@ -28,7 +28,7 @@ echo "Activated Conda environment: $(which python)"
 
 # --- JOB LOGIC ---
 sub=1
-script="/home/rothermm/brain-diffuser/scripts/analysis/assessor_scores_original_images.py"
+script="/home/rothermm/brain-diffuser/scripts/analysis/09_assessor_scores_original_images.py"
 log="/home/rothermm/brain-diffuser/logs/${SLURM_JOB_NAME}_sub${sub}_${SLURM_JOB_ID}.log"
 
 echo "==== Computing EmoNet/MemNet on ORIGINAL test images for subject $sub at $(date) ===="

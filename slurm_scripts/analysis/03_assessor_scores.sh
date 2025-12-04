@@ -30,7 +30,7 @@ overall_status=0
 for sub in "${subjects[@]}"; do
     echo "==== Computing assessor scores for subject $sub at $(date) ===="
 
-    python -u /home/rothermm/brain-diffuser/scripts/analysis/compute_assessor_scores.py --sub "$sub" \
+    python -u /home/rothermm/brain-diffuser/scripts/analysis/03_compute_assessor_scores.py --sub "$sub" \
         2>&1 | tee logs/${SLURM_JOB_NAME}_sub${sub}_${SLURM_JOB_ID}.log
 
     if [ "${PIPESTATUS[0]}" -ne 0 ]; then

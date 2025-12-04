@@ -1,33 +1,91 @@
-# — Ignore everything by default —
+# ============================================
+# Ignore everything by default
+# ============================================
 *
-!README.md
 
-# — But allow the scripts, slurm_scripts, results directories —
+# ============================================
+# Allow essential project files
+# ============================================
+!.gitignore
+!README.md
+!environment.yml
+
+# ============================================
+# Allow scripts directories
+# ============================================
 !scripts/
+!scripts/*.py
+!scripts/analysis/
+!scripts/analysis/*.py
+!scripts/analysis/*.ipynb
+
 !slurm_scripts/
+!slurm_scripts/*.sh
+!slurm_scripts/analysis/
+!slurm_scripts/analysis/*.sh
+
+# ============================================
+# Allow results/graphs directory
+# ============================================
 !results/
 !results/graphs/
-!results/metrics/
-
-# — And everything inside them —
-!scripts/**
-!slurm_scripts/**
 !results/graphs/**
-!results/metrics/**
 
-# Ignore freesurfer entirely
-freesurfer/
+# ============================================
+# Ignore unwanted subdirectories in scripts
+# ============================================
+scripts/redundant/
+scripts/alignment/
+scripts/analysis/redundant_scripts/
+slurm_scripts/alignment/
+slurm_scripts/analysis/redundant_scripts/
 
-# — Still ignore unwanted stuff inside other folders —
-**/.ipynb_checkpoints/
-scripts/**/.ipynb_checkpoints/
-slurm_scripts/**/.ipynb_checkpoints/
-
-# Logs (everywhere) & specifically slurm_scripts/analysis/logs/
-**/logs/
-slurm_scripts/analysis/logs/
+# ============================================
+# Always ignore these patterns everywhere
+# ============================================
 
 # Python cache / bytecode
-__pycache__/
+**/__pycache__/
 *.pyc
 *.pyo
+*.pyd
+
+# Jupyter checkpoints
+**/.ipynb_checkpoints/
+
+# Logs
+**/logs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Data directories (large files)
+data/
+figures/
+flatmaps/
+
+# Ignore other results subdirectories (but not graphs - allowed above)
+results/assessor_scores/
+results/metrics/
+results/nifti/
+results/statistics/
+results/thetas/
+results/vdvae/
+results/versatile_diffusion/
+
+# External dependencies
+vdvae/
+versatile_diffusion/
+assessors/
+freesurfer/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+*.swp
+*.swo
+*~

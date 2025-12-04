@@ -30,7 +30,7 @@ OUTSIZE=512
 
 mkdir -p logs
 
-python -u /home/rothermm/brain-diffuser/scripts/vdvae_image_to_image.py \
+python -u /home/rothermm/brain-diffuser/scripts/04b_vdvae_image_to_image.py \
   --images-npy "${IMAGES_NPY}" \
   --bs "${BS}" \
   --resize "${OUTSIZE}" \

@@ -42,7 +42,7 @@ echo "==== Starting subject ${SUBJECT_ID} at $(date) ===="
 
 # Execute the python script for the specified subject
 # The script's final exit code will be determined by the python command's success or failure
-python -u /home/rothermm/brain-diffuser/scripts/versatilediffusion_reconstruct_images_original.py --sub "${SUBJECT_ID}" \
+python -u /home/rothermm/brain-diffuser/scripts/09_versatilediffusion_reconstruct_images.py --sub "${SUBJECT_ID}" \
 2>&1 | tee logs/${SLURM_JOB_NAME}_sub${SUBJECT_ID}_${SLURM_JOB_ID}.log
 
 # Capture the exit status of the python script (from the left side of the pipe)

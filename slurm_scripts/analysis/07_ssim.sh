@@ -16,7 +16,7 @@ echo "Job ID: ${SLURM_JOB_ID}"
 echo "Working Directory: $(pwd)"
 
 # --- PATHS & DEFAULTS ---
-PY_FILE="/home/rothermm/brain-diffuser/scripts/analysis/ssim.py"
+PY_FILE="/home/rothermm/brain-diffuser/scripts/analysis/07_ssim.py"
 BASE_DIR="/home/rothermm/brain-diffuser/results"
 OUT_DIR="${BASE_DIR}/metrics/ssim"
 MODELS=("vdvae" "versatile_diffusion")
