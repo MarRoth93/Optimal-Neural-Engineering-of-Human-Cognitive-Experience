@@ -1,7 +1,7 @@
 
 <img width="985" height="378" alt="Screenshot from 2025-07-18 15-10-59" src="https://github.com/user-attachments/assets/cbe55d09-9bef-4bee-9d2d-2b46ffe2e84c" />
 
-![Uploading Gemini_Generated_Image_efvzgbefvzgbefvz.png…]()
+<img width="2816" height="1536" alt="Gemini_Generated_Image_efvzgbefvzgbefvz" src="https://github.com/user-attachments/assets/576579ae-32c6-4288-be91-976c52e502b1" />
 
 
 # Optimal Neural Engineering of Human Cognitive Experience
