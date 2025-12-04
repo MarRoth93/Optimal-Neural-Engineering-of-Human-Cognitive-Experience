@@ -1,7 +1,8 @@
 
 <img width="985" height="378" alt="Screenshot from 2025-07-18 15-10-59" src="https://github.com/user-attachments/assets/cbe55d09-9bef-4bee-9d2d-2b46ffe2e84c" />
 
-<img width="985" alt="Brain-Diffuser Pipeline Infographic" src="assets/pipeline_infographic.png" />
+![Uploading Gemini_Generated_Image_efvzgbefvzgbefvz.png…]()
+
 
 # Optimal Neural Engineering of Human Cognitive Experience
 
